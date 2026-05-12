@@ -1,0 +1,172 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    background-color: #FFFFFF;
+    min-height: 100vh;
+}
+
+.card {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: #FFFFFF;
+    border-radius: 30px;
+    padding-top: 16px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 85px;
+    margin-left: 17px;
+    gap: 8px;
+}
+
+.logo {
+    border-radius: 30px;
+    width: 45px;
+    height: 43px;
+    object-fit: fill;
+}
+
+.brand {
+    color: #374DB7;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.titleWrapper {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.title {
+    color: #000000;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.subtitle {
+    color: #000000;
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 26px;
+    margin-left: 28px;
+    margin-right: 14px;
+}
+
+.label {
+    color: #000000;
+    font-size: 18px;
+    margin-bottom: 12px;
+    margin-left: 26px;
+    font-weight: 500;
+}
+
+.inputGroup {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    background-color: #D9D9D9;
+    border-radius: 12px;
+    padding: 0 12px;
+    margin-bottom: 17px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.inputIcon {
+    width: 24px;
+    height: 17px;
+    margin-right: 12px;
+    object-fit: fill;
+}
+
+.input {
+    color: #000000;
+    font-size: 16px;
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 13px 0;
+    outline: none;
+}
+
+.optionsRow {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+    margin-left: 29px;
+    margin-right: 11px;
+}
+
+.rememberMe {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 16px;
+}
+
+.forgotPassword {
+    color: #448AFF;
+    font-size: 15px;
+    margin-left: auto;
+    cursor: pointer;
+}
+
+.buttonPrimary {
+    align-self: stretch;
+    background-color: #34D399;
+    color: #FFFFFF;
+    border-radius: 10px;
+    border: none;
+    padding: 11px 0;
+    font-size: 20px;
+    margin: 0 17px 45px 17px;
+    cursor: pointer;
+}
+
+.footerText {
+    color: #000000;
+    font-size: 16px;
+    margin-bottom: 58px;
+    margin-left: 41px;
+}
+
+.dividerRow {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    margin-bottom: 54px;
+    padding: 0 7px;
+}
+
+.line {
+    height: 1px;
+    flex: 1;
+    background-color: #000000;
+}
+
+.dividerText {
+    font-size: 14px;
+    padding: 0 10px;
+}
+
+.googleButton {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #D7D1D1;
+    border-radius: 10px;
+    padding: 10px 0;
+    margin: 0 17px 48px 17px;
+    border: none;
+    cursor: pointer;
+    gap: 10px;
+}

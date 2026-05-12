@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* Menggunakan font Inter sesuai desain Figma */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Warna background utama dari desain kamu */
+    @apply bg-[#FBF8F8]; 
+  }
+}
+
+#root {
+  min-width: 1280px; /* Memaksa container memiliki lebar minimal seperti desktop */
+  margin: 0 auto;
+}
+
+/* Scrollbar agar lebih minimalis (Opsional) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
