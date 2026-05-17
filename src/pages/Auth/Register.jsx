@@ -1,304 +1,287 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../api";
-
+import styles from "./Register.module.css";
 
 const EyeIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-    fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
     <circle cx="12" cy="12" r="3"/>
   </svg>
 );
 
 const EyeOffIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-    fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
     <line x1="1" y1="1" x2="23" y2="23"/>
   </svg>
 );
 
+function getPasswordStrength(password) {
+  const checks = [/[A-Z]/,/[a-z]/,/[0-9]/,/[^A-Za-z0-9]/].map(r => r.test(password));
+  checks.push(password.length >= 8);
+  const score = checks.filter(Boolean).length;
+  if (!password.length) return { score:0, label:'', color:'' };
+  if (score <= 2) return { score, label:'Lemah 😬',      color:'#ef4444' };
+  if (score === 3) return { score, label:'Sedang 🤔',     color:'#f59e0b' };
+  if (score === 4) return { score, label:'Kuat 💪',       color:'#10b981' };
+  return             { score, label:'Sangat Kuat 🔥', color:'#06b6d4' };
+}
+
 export default function Register() {
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
+
+  const [fullName,        setFullName]        = useState('');
+  const [email,           setEmail]           = useState('');
+  const [phone,           setPhone]           = useState('');
+  const [password,        setPassword]        = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [agree, setAgree] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [showPassword,    setShowPassword]    = useState(false);
+  const [showConfirm,     setShowConfirm]     = useState(false);
+  const [agree,           setAgree]           = useState(false);
+  const [error,           setError]           = useState('');
+  const [success,         setSuccess]         = useState('');
+  const [loading,         setLoading]         = useState(false);
+
+  const hasUpper   = /[A-Z]/.test(password);
+  const hasLower   = /[a-z]/.test(password);
+  const hasNumber  = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  const isLong     = password.length >= 8;
+  const strength   = getPasswordStrength(password);
+
+  const pwMatch    = confirmPassword.length > 0 && password === confirmPassword;
+  const pwMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const handleRegister = async () => {
-    setError('');
-    setSuccess('');
-
-    if (!fullName || !email || !password || !confirmPassword) {
-      setError("Harap isi semua field yang wajib!");
-      return;
-    }
-    if (!agree) {
-      setError("Harap setujui Syarat & Ketentuan terlebih dahulu");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Password dan konfirmasi password tidak cocok!");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password minimal 6 karakter!");
-      return;
-    }
+    setError(''); setSuccess('');
+    if (!fullName || !email || !password || !confirmPassword) { setError("Harap isi semua field yang wajib!"); return; }
+    if (!agree)    { setError("Harap setujui Syarat & Ketentuan terlebih dahulu"); return; }
+    if (!hasUpper) { setError("Password harus mengandung minimal 1 huruf kapital (A-Z)!"); return; }
+    if (!hasLower) { setError("Password harus mengandung minimal 1 huruf kecil (a-z)!"); return; }
+    if (password.length < 6)         { setError("Password minimal 6 karakter!"); return; }
+    if (password !== confirmPassword) { setError("Password dan konfirmasi password tidak cocok!"); return; }
 
     setLoading(true);
-
     try {
-      
-      const res = await fetch(`${API_BASE_URL}/register.php`, {
+      const res  = await fetch(`${API_BASE_URL}/register.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fullName,
-          email,
-          phone,
-          password,
-        }),
+        body: JSON.stringify({ name: fullName, email, phone, password }),
       });
-
       const data = await res.json();
-
       if (data.status === "success") {
         setSuccess("Akun berhasil dibuat! Silakan login.");
         setTimeout(() => navigate('/login'), 1500);
-      } else {
-        setError(data.message || "Registrasi gagal.");
-      }
+      } else { setError(data.message || "Registrasi gagal."); }
     } catch (err) {
       console.error(err);
       setError("Gagal terhubung ke server. Pastikan XAMPP aktif.");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className={styles.root}>
 
-      {/* ===== KIRI - Hijau ===== */}
-      <div className="flex flex-col justify-between p-10 flex-1" style={{ backgroundColor: '#34D399' }}>
-        <div className="flex items-center gap-2">
-          <img src="/logo-finedu.jpeg"
-            className="w-12 h-12 object-fill rounded-full" alt="Logo"/>
-          <span className="text-[28px] font-bold">
-            <span style={{ color: '#384DB8' }}>Fin</span>
-            <span style={{ color: '#FFC107' }}>Edu</span>
+      {/* ── LEFT ── */}
+      <div className={styles.left}>
+        <div className={`${styles.blob} ${styles.blob1}`} />
+        <div className={`${styles.blob} ${styles.blob2}`} />
+        <div className={`${styles.blob} ${styles.blob3}`} />
+        <div className={styles.grid} />
+
+        <div className={styles.logo}>
+          <img src="/logo-finedu.jpeg" alt="Logo" />
+          <span className={styles.logoTxt}>
+            <span className={styles.cBlue}>Fin</span>
+            <span className={styles.cGold}>Edu</span>
           </span>
         </div>
-        <div>
-          <h2 className="text-white text-[36px] font-bold mb-4">Mulai Perjalanan Literasi<br />Keuangan Anda</h2>
-          <p className="text-white text-base mb-10" style={{ opacity: 0.9 }}>
-            Bergabunglah dengan ribuan<br />pengguna yang telah<br />meningkatkan finansial mereka<br />bersama FinEdu.
+
+        <div className={styles.mid}>
+          <h2 className={styles.headline}>
+            Mulai Perjalanan<br /><em>Literasi Keuangan</em><br />Kamu 🚀
+          </h2>
+          <p className={styles.subtext}>
+            Bergabung dengan ribuan pengguna<br />
+            yang udah upgrade skill finansial<br />
+            mereka bareng FinEdu.
           </p>
-          <div className="flex flex-col gap-5">
+          <div>
             {[
-              { icon: "📚", title: "Modul Pembelajaran", desc: "Akses ke puluhan modul keuangan berkualitas" },
-              { icon: "🏆", title: "Badges dan sertifikat", desc: "Dapatkan pengakuan atas pencapaian Anda" },
+              { icon:"📚", title:"Modul Pembelajaran", desc:"Akses ke puluhan modul keuangan berkualitas" },
+              { icon:"🏆", title:"Badges & Sertifikat",  desc:"Dapatkan pengakuan atas pencapaian kamu" },
+              { icon:"🤝", title:"Komunitas Aktif",      desc:"Belajar bareng dengan sesama Gen Z" },
             ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0">
-                  <span className="text-lg">{f.icon}</span>
-                </div>
+              <div className={styles.featItem} key={i}>
+                <div className={styles.featItemIcon}>{f.icon}</div>
                 <div>
-                  <p className="text-white font-bold text-sm">{f.title}</p>
-                  <p className="text-white text-xs" style={{ opacity: 0.85 }}>{f.desc}</p>
+                  <p className={styles.featItemTitle}>{f.title}</p>
+                  <p className={styles.featItemDesc}>{f.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <div></div>
-      </div>
 
-      {/* ===== KANAN - Form Register ===== */}
-      {}
-      <div style={{
-        width: '480px', minWidth: '400px',
-        backgroundColor: '#F3F4F6',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '32px 24px', overflowY: 'auto',
-      }}>
-        {/* Card putih */}
-        <div style={{
-          backgroundColor: '#fff', borderRadius: '20px',
-          padding: '32px 28px', width: '100%',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-        }}>
-
-          {/* Logo kanan */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <img src="/logo-finedu.jpeg"
-              style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
-              alt="Logo"/>
-            <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-              <span style={{ color: '#384DB8' }}>Fin</span>
-              <span style={{ color: '#FFC107' }}>Edu</span>
-            </span>
-          </div>
-
-          <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: '#000', marginBottom: '4px' }}>Create Account</h1>
-          <p style={{ color: '#6B7280', fontSize: '13px', marginBottom: '16px' }}>
-            Daftar untuk memulai pembelajaran finansial anda
-          </p>
-
-          {/* Error */}
-          {error && (
-            <div style={{
-              marginBottom: '12px', padding: '10px 14px', borderRadius: '10px',
-              fontSize: '13px', color: '#DC2626',
-              backgroundColor: '#FEF2F2', border: '1px solid #FECACA',
-            }}>
-              {error}
-            </div>
-          )}
-
-          {/* Success */}
-          {success && (
-            <div style={{
-              marginBottom: '12px', padding: '10px 14px', borderRadius: '10px',
-              fontSize: '13px', color: '#16A34A',
-              backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0',
-            }}>
-              {success}
-            </div>
-          )}
-
-          {/* Fields: Full Name, Email, Phone */}
-          {[
-            { label: 'Full Name', icon: '👤', type: 'text', placeholder: 'Masukan nama lengkap Anda', value: fullName, onChange: setFullName },
-            { label: 'Email Address', icon: '✉️', type: 'email', placeholder: 'nama@gmail.com', value: email, onChange: setEmail },
-            { label: 'Phone Number', icon: '📞', type: 'tel', placeholder: 'Xxxxxxxx', value: phone, onChange: setPhone },
-          ].map((field, i) => (
-            <div key={i}>
-              <label style={{ fontSize: '13px', fontWeight: '600', color: '#000', display: 'block', marginBottom: '6px' }}>
-                {field.label}
-              </label>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                border: '1px solid #E0E0E0', borderRadius: '10px',
-                padding: '10px 12px', marginBottom: '12px',
-                backgroundColor: '#F9F9F9',
-              }}>
-                <span style={{ fontSize: '16px' }}>{field.icon}</span>
-                <input
-                  type={field.type} placeholder={field.placeholder} value={field.value}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', background: 'transparent', color: '#000' }}
-                />
-              </div>
+        <div className={styles.stats}>
+          {[['10K+','Pengguna'],['50+','Modul'],['4.9★','Rating']].map(([n,l],i) => (
+            <div className={styles.stat} key={i}>
+              <div className={styles.statNum}>{n}</div>
+              <div className={styles.statLbl}>{l}</div>
             </div>
           ))}
+        </div>
+      </div>
 
-          {/* Password */}
-          <label style={{ fontSize: '13px', fontWeight: '600', color: '#000', display: 'block', marginBottom: '6px' }}>
-            Password
-          </label>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            border: '1px solid #E0E0E0', borderRadius: '10px',
-            padding: '10px 12px', marginBottom: '12px',
-            backgroundColor: '#F9F9F9',
-          }}>
-            <span style={{ fontSize: '16px' }}>🔒</span>
-            <input
-              type={showPassword ? "text" : "password"} placeholder="Minimal 6 karakter"
-              value={password} onChange={(e) => setPassword(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', background: 'transparent', color: '#000' }}
-            />
-            <span onClick={() => setShowPassword(!showPassword)}
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </span>
+      {/* ── RIGHT ── */}
+      <div className={styles.right}>
+        <div className={`${styles.deco} ${styles.deco1}`} />
+        <div className={`${styles.deco} ${styles.deco2}`} />
+
+        <div className={styles.wrap}>
+          {/* Mobile header */}
+          <div className={styles.mobileHeader}>
+            <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+              <img src="/logo-finedu.jpeg" alt="Logo"
+                style={{ width:'36px', height:'36px', borderRadius:'30px', objectFit:'cover', border:'2px solid rgba(52,211,153,.5)' }} />
+              <span className={styles.mobileLogoTxt}>
+                <span className={styles.cBlue}>Fin</span>
+                <span className={styles.cGold}>Edu</span>
+              </span>
+            </div>
+            <span className={styles.mobileTagline}>Buat akun baru</span>
           </div>
 
-          {/* Confirm Password */}
-          <label style={{ fontSize: '13px', fontWeight: '600', color: '#000', display: 'block', marginBottom: '6px' }}>
-            Confirm Password
-          </label>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            border: '1px solid #E0E0E0', borderRadius: '10px',
-            padding: '10px 12px', marginBottom: '12px',
-            backgroundColor: '#F9F9F9',
-          }}>
-            <span style={{ fontSize: '16px' }}>🔒</span>
-            <input
-              type={showConfirm ? "text" : "password"} placeholder="Konfirmasi password anda"
-              value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', background: 'transparent', color: '#000' }}
-            />
-            <span onClick={() => setShowConfirm(!showConfirm)}
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
-            </span>
-          </div>
+          <div className={styles.card}>
+            <div className={styles.cardLogo}>
+              <img src="/logo-finedu.jpeg" alt="Logo" />
+              <span className={styles.cardLogoTxt}>
+                <span className={styles.cBlue}>Fin</span>
+                <span className={styles.cGold}>Edu</span>
+              </span>
+            </div>
 
-          {/* Checkbox */}
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px', cursor: 'pointer' }}>
-            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)}
-              style={{ width: '14px', height: '14px', marginTop: '2px', flexShrink: 0 }}/>
-            <span style={{ fontSize: '12px', color: '#000' }}>
-              Saya setuju dengan{' '}
-              <span style={{ fontWeight: '600', color: '#34D399', cursor: 'pointer' }}>Syarat & Ketentuan</span>
-              {' '}dan{' '}
-              <span style={{ fontWeight: '600', color: '#34D399', cursor: 'pointer' }}>Kebijakan Privasi</span>
-            </span>
-          </label>
+            <h1 className={styles.title}>Create Account ✨</h1>
+            <p className={styles.subtitle}>Daftar & mulai perjalanan finansial kamu sekarang</p>
 
-          {/* Tombol Create Account */}
-          <button
-            onClick={handleRegister}
-            disabled={loading}
-            style={{
-              width: '100%', padding: '12px', borderRadius: '10px',
-              border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-              backgroundColor: loading ? '#6EE7B7' : '#34D399',
-              color: '#fff', fontSize: '14px', fontWeight: 'bold',
-              marginBottom: '12px', transition: 'opacity 0.2s',
+            {error   && <div className={`${styles.alert} ${styles.alertErr}`}><span>⚠️</span><span>{error}</span></div>}
+            {success && <div className={`${styles.alert} ${styles.alertOk}`}><span>🎉</span><span>{success}</span></div>}
+
+            {/* Full Name */}
+            <label className={styles.label}>Full Name</label>
+            <div className={styles.inputGroup}>
+              <span className={styles.inputIcon}>👤</span>
+              <input className={styles.inputField} type="text" placeholder="Nama lengkap kamu"
+                value={fullName} onChange={e => setFullName(e.target.value)} />
+            </div>
+
+            {/* Email */}
+            <label className={styles.label}>Email Address</label>
+            <div className={styles.inputGroup}>
+              <span className={styles.inputIcon}>✉️</span>
+              <input className={styles.inputField} type="email" placeholder="nama@gmail.com"
+                value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+
+            {/* Phone */}
+            <label className={styles.label}>
+              Phone Number <span className={styles.labelOpt}>(opsional)</span>
+            </label>
+            <div className={styles.inputGroup}>
+              <span className={styles.inputIcon}>📱</span>
+              <input className={styles.inputField} type="tel" placeholder="08xxxxxxxxxx"
+                value={phone} onChange={e => setPhone(e.target.value)} />
+            </div>
+
+            {/* Password */}
+            <label className={styles.label}>Password</label>
+            <div className={styles.inputGroup}>
+              <span className={styles.inputIcon}>🔒</span>
+              <input className={styles.inputField}
+                type={showPassword ? "text" : "password"}
+                placeholder="Min. huruf besar + kecil"
+                value={password} onChange={e => setPassword(e.target.value)}
+              />
+              <button className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)} type="button" tabIndex={-1}>
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+
+            {/* Strength */}
+            {password.length > 0 && (
+              <>
+                <div className={styles.strBars}>
+                  {[1,2,3,4,5].map(i => (
+                    <div key={i} className={styles.strBar}
+                      style={{ background: i <= strength.score ? strength.color : '#e5e7eb' }} />
+                  ))}
+                </div>
+                <div className={styles.strMeta}>
+                  <span className={styles.strLabel} style={{ color: strength.color }}>{strength.label}</span>
+                </div>
+                <div className={styles.hints}>
+                  {[
+                    [hasUpper,'Huruf Besar'],[hasLower,'Huruf Kecil'],
+                    [hasNumber,'Angka'],[hasSpecial,'Simbol'],[isLong,'8+ Karakter'],
+                  ].map(([ok,lbl],i) => (
+                    <span key={i} className={`${styles.hint} ${ok ? styles.hintOk : styles.hintFail}`}>
+                      {ok ? '✓' : '○'} {lbl}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Confirm Password */}
+            <label className={styles.label}>Confirm Password</label>
+            <div className={styles.inputGroup} style={{
+              boxShadow: pwMatch ? '0 0 0 2px #34D399' : pwMismatch ? '0 0 0 2px #ef4444' : 'none',
+              background: pwMatch || pwMismatch ? '#fff' : undefined,
             }}>
-            {loading ? "Sedang mendaftar..." : "Create Account"}
-          </button>
+              <span className={styles.inputIcon}>🔐</span>
+              <input className={styles.inputField}
+                type={showConfirm ? "text" : "password"}
+                placeholder="Ulangi password kamu"
+                value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+              />
+              <button className={styles.eyeBtn} onClick={() => setShowConfirm(!showConfirm)} type="button" tabIndex={-1}>
+                {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
 
-          <p style={{ textAlign: 'center', fontSize: '13px', color: '#000', marginBottom: '16px' }}>
-            Sudah punya akun?{' '}
-            <span onClick={() => navigate('/login')}
-              style={{ color: '#34D399', fontWeight: 'bold', cursor: 'pointer' }}>
-              Sign In
-            </span>
-          </p>
+            {/* Match indicator */}
+            {confirmPassword.length > 0 && (
+              <div className={styles.matchRow} style={{ color: pwMatch ? '#16a34a' : '#ef4444' }}>
+                <div className={styles.matchDot} style={{ background: pwMatch ? '#16a34a' : '#ef4444' }} />
+                {pwMatch ? 'Password cocok ✓' : 'Password belum cocok'}
+              </div>
+            )}
 
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#E0E0E0' }} />
-            <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Atau daftar dengan</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#E0E0E0' }} />
+            {/* Checkbox */}
+            <label className={styles.checkboxContainer}>
+              <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} />
+              <span className={styles.checkboxText}>
+                Saya setuju dengan{' '}
+                <span className={styles.checkboxLink}>Syarat & Ketentuan</span>
+                {' '}dan{' '}
+                <span className={styles.checkboxLink}>Kebijakan Privasi</span>
+                {' '}FinEdu
+              </span>
+            </label>
+
+            <button className={styles.submitBtn} onClick={handleRegister} disabled={loading}>
+              {loading ? "Sedang mendaftar... ⏳" : "Create Account →"}
+            </button>
+
+            <p className={styles.footerText}>
+              Sudah punya akun?{' '}
+              <span className={styles.link} onClick={() => navigate('/login')}>Sign In</span>
+            </p>
           </div>
-
-          {/* Google */}
-          <button style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '10px', padding: '11px', borderRadius: '10px',
-            border: '1px solid #E0E0E0', backgroundColor: '#fff',
-            cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#000',
-          }}>
-            <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/KssvpwxTdd/a8hybcgu_expires_30_days.png"
-              style={{ width: '18px', height: '18px', objectFit: 'contain' }} alt="Google"/>
-            Google
-          </button>
         </div>
       </div>
     </div>
