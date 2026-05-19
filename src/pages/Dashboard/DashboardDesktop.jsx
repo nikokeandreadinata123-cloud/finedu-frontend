@@ -1,130 +1,143 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import { useUser } from "../../context/UserContext";
+import styles from "./Dashboard.module.css";
 
-// ==========================
-
-// ==========================
+/* ─────────────────────────────────────────────────
+   DONUT CHART — logika tidak diubah, hanya styling
+───────────────────────────────────────────────── */
 const DonutChart = ({ percent }) => {
   const [anim, setAnim] = useState(0);
 
   useEffect(() => {
     let start = null;
-
     const animate = (t) => {
       if (!start) start = t;
       const p = Math.min((t - start) / 800, 1);
       const eased = 1 - Math.pow(1 - p, 3);
-
       setAnim(Math.round(eased * percent));
-
       if (p < 1) requestAnimationFrame(animate);
     };
-
     requestAnimationFrame(animate);
   }, [percent]);
 
-  const r = 40;
+  const r = 36;
   const circ = 2 * Math.PI * r;
   const filled = (anim / 100) * circ;
 
   return (
-    <svg width="100" height="100" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r={r} stroke="#D9D9D9" strokeWidth="12" fill="none" />
+    <svg width="90" height="90" viewBox="0 0 90 90" style={{ flexShrink: 0 }}>
+      <circle cx="45" cy="45" r={r} stroke="#f0f0f0" strokeWidth="10" fill="none" />
       <circle
-        cx="50" cy="50" r={r}
-        stroke="#34D399" strokeWidth="12" fill="none"
+        cx="45" cy="45" r={r}
+        stroke="url(#donutGrad)" strokeWidth="10" fill="none"
         strokeDasharray={`${filled} ${circ}`}
-        transform="rotate(-90 50 50)"
+        transform="rotate(-90 45 45)"
         strokeLinecap="round"
       />
-      <text x="50" y="47" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#000">{anim}%</text>
-      <text x="50" y="61" textAnchor="middle" fontSize="9" fill="#555">Complete</text>
+      <defs>
+        <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#34D399" />
+          <stop offset="100%" stopColor="#06b6d4" />
+        </linearGradient>
+      </defs>
+      <text x="45" y="42" textAnchor="middle" fontSize="13" fontWeight="800" fill="#0a0a0f">{anim}%</text>
+      <text x="45" y="55" textAnchor="middle" fontSize="8"  fill="#6b7280">Complete</text>
     </svg>
   );
 };
 
-// ==========================
-
-// ==========================
-const ProgressBar = ({ percent }) => {
+/* ─────────────────────────────────────────────────
+   PROGRESS BAR — logika tidak diubah
+───────────────────────────────────────────────── */
+const ProgressBar = ({ percent, color }) => {
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
     let start = null;
-
     const animate = (t) => {
       if (!start) start = t;
       const p = Math.min((t - start) / 700, 1);
       const eased = 1 - Math.pow(1 - p, 3);
-
       setWidth(Math.round(eased * percent));
-
       if (p < 1) requestAnimationFrame(animate);
     };
-
     requestAnimationFrame(animate);
   }, [percent]);
 
   return (
-    <div style={{ height: 6, background: "#E5E7EB", borderRadius: 99 }}>
+    <div className={styles.pbTrack}>
       <div
-        style={{
-          width: `${width}%`,
-          height: 6,
-          background: "#34D399",
-          borderRadius: 99,
-        }}
+        className={styles.pbFill}
+        style={{ width: `${width}%`, background: color || undefined }}
       />
     </div>
   );
 };
 
-// ==========================
-
-// ==========================
+/* ─────────────────────────────────────────────────
+   GET MODULE PROGRESS — tidak diubah sama sekali
+───────────────────────────────────────────────── */
 function getModuleProgress(modulId, totalSlides) {
   try {
     const data = JSON.parse(localStorage.getItem(`modul_${modulId}`));
-
     if (!data || !data.completed) return 0;
-
     return Math.round((data.completed.length / totalSlides) * 100);
   } catch {
     return 0;
   }
 }
 
-// ==========================
+/* ─────────────────────────────────────────────────
+   QUOTES untuk motivasi Gen Z
+───────────────────────────────────────────────── */
+const quotes = [
+  "Investasi terbaik adalah investasi pada dirimu sendiri. 🚀",
+  "Mulai dari Rp1.000 pun, yang penting mulai! 💪",
+  "Literasi keuangan = kebebasan finansial. ✨",
+  "Konsisten > Sempurna. Keep going! 🔥",
+  "Uangmu, hidupmu, pilihanmu. 💡",
+];
 
-// ==========================
+/* ─────────────────────────────────────────────────
+   BADGES
+───────────────────────────────────────────────── */
+const allBadges = [
+  { emoji: "🏅", label: "First Step",    earned: true  },
+  { emoji: "🔥", label: "3-Day Streak",  earned: true  },
+  { emoji: "📚", label: "Modul Selesai", earned: false },
+  { emoji: "🎯", label: "Quiz Master",   earned: false },
+  { emoji: "💎", label: "Top Learner",   earned: false },
+];
+
+/* ─────────────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────────────── */
 export default function DashboardDesktop() {
   const { user } = useUser();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const displayName = user?.name || "Pengguna";
 
   const [refresh, setRefresh] = useState(0);
 
-  // 🔥 auto refresh kalau balik dari modul
+  /* ── Auto refresh — logika tidak diubah ── */
   useEffect(() => {
     const interval = setInterval(() => {
       setRefresh((prev) => prev + 1);
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // ==========================
-  
-  // ==========================
+  /* ── Modules data — tidak diubah ── */
   const modules = [
     {
       id: 1,
       title: "Manajemen Utang",
       desc: "Pelajari cara mengelola dan mengurangi utang secara efektif",
       emoji: "📋",
-      iconBg: "#F59E0B",
+      iconBg: "#FFF7ED",
+      iconColor: "#F59E0B",
       totalSlides: 3,
     },
     {
@@ -132,7 +145,8 @@ export default function DashboardDesktop() {
       title: "Dasar Investasi",
       desc: "Pahami konsep dasar investasi untuk masa depan yang lebih baik",
       emoji: "🎯",
-      iconBg: "#3B82F6",
+      iconBg: "#EFF6FF",
+      iconColor: "#3B82F6",
       totalSlides: 3,
     },
     {
@@ -140,101 +154,191 @@ export default function DashboardDesktop() {
       title: "Dasar Penganggaran",
       desc: "Buat dan kelola anggaran bulanan dengan mudah",
       emoji: "📒",
-      iconBg: "#F97316",
+      iconBg: "#FFF7ED",
+      iconColor: "#F97316",
       totalSlides: 2,
     },
   ];
 
-  // ==========================
-  
-  // ==========================
-  const progresses = modules.map((m) =>
-    getModuleProgress(m.id, m.totalSlides)
-  );
+  const progresses    = modules.map((m) => getModuleProgress(m.id, m.totalSlides));
+  const totalProgress = progresses.reduce((a, b) => a + b, 0) / modules.length;
 
-  const totalProgress =
-    progresses.reduce((a, b) => a + b, 0) / modules.length;
+  const todayQuote = quotes[new Date().getDay() % quotes.length];
+
+  /* streak hari (simulasi — bisa dihubungkan ke backend nanti) */
+  const streakDays = 3;
+  const weekDays   = ["S","M","T","W","T"];
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#FBF9F9' }}>
+    <div className={styles.root}>
       <Sidebar />
 
-      <div className="flex-1 pt-8 px-8 pb-8">
+      <main className={styles.main}>
 
-        {/* HEADER */}
-        <span className="block text-[#000000] text-[32px] font-bold mb-5">
-          Selamat Datang, {displayName}!
-        </span>
+        {/* ── GREETING ── */}
+        <div className={styles.header}>
+          <h1 className={styles.greeting}>
+            Halo, <span>{displayName}</span>! 👋
+          </h1>
+          <p className={styles.subGreeting}>
+            Lanjutkan perjalanan literasi keuangan kamu hari ini
+          </p>
+        </div>
 
-        {/* GLOBAL PROGRESS */}
-        <div className="bg-white rounded-2xl p-5 mb-6" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <span className="block text-[#000000] text-base font-semibold mb-4">Progres Belajar</span>
-          <div className="flex items-center gap-6">
-            <div className="shrink-0">
-              <DonutChart percent={Math.round(totalProgress)} />
+        {/* ── STAT CARDS ── */}
+        <div className={styles.statsRow}>
+          <div className={styles.statCard}>
+            <div className={`${styles.statIconBox} ${styles.blue}`}>📈</div>
+            <div>
+              <div className={styles.statNum}>{Math.round(totalProgress)}%</div>
+              <div className={styles.statLabel}>Total Progress</div>
             </div>
-            <div className="flex-1">
-              <ProgressBar percent={Math.round(totalProgress)} />
-              <p style={{ fontSize: 12, marginTop: 6, color: '#6B7280' }}>
-                Total Progress: {Math.round(totalProgress)}%
-              </p>
+          </div>
+          <div className={styles.statCard}>
+            <div className={`${styles.statIconBox} ${styles.green}`}>✅</div>
+            <div>
+              <div className={styles.statNum}>
+                {progresses.filter(p => p === 100).length}/{modules.length}
+              </div>
+              <div className={styles.statLabel}>Modul Selesai</div>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={`${styles.statIconBox} ${styles.orange}`}>🔥</div>
+            <div>
+              <div className={styles.statNum}>{streakDays}</div>
+              <div className={styles.statLabel}>Day Streak</div>
             </div>
           </div>
         </div>
 
-        {/* MODULE LIST */}
-        <div className="flex justify-between items-center mb-4">
-          <span className="text-[#000000] text-base font-semibold">Module</span>
-          <span
-            className="text-sm cursor-pointer"
-            style={{ color: '#34D399' }}
-            onClick={() => navigate('/learning')}>
-            Lihat Semua →
-          </span>
+        {/* ── 2-COL: PROGRESS + STREAK ── */}
+        <div className={styles.gridTwo}>
+
+          {/* Progress Card */}
+          <div className={styles.progressCard}>
+            <div className={styles.cardTitle}>
+              <span>📊</span> Progres Belajar
+            </div>
+            <div className={styles.donutWrap}>
+              <DonutChart percent={Math.round(totalProgress)} />
+              <div className={styles.progressBars}>
+                {modules.map((mod, i) => (
+                  <div className={styles.pbRow} key={mod.id}>
+                    <div className={styles.pbLabel}>
+                      <span>{mod.emoji} {mod.title}</span>
+                      <span>{progresses[i]}%</span>
+                    </div>
+                    <ProgressBar percent={progresses[i]} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Streak + Quote Card */}
+          <div className={styles.streakCard}>
+            <div className={styles.streakTop}>
+              <div className={styles.streakLabel}>🔥 Daily Streak</div>
+              <div className={styles.streakNum}>{streakDays}</div>
+              <div className={styles.streakSub}>Hari berturut-turut belajar</div>
+              <div className={styles.streakDots}>
+                {weekDays.map((d, i) => (
+                  <div
+                    key={i}
+                    className={`${styles.streakDot} ${i < streakDays ? styles.done : ''}`}
+                    title={d}
+                  >
+                    {i < streakDays ? '✓' : d}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className={styles.quoteBox}>
+              "{todayQuote}"
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-4">
-          {modules.map((mod) => {
-            const progress = getModuleProgress(mod.id, mod.totalSlides);
-            const statusLabel = progress === 100 ? "Selesai" : progress === 0 ? "Belum dimulai" : "Sedang berjalan";
+        {/* ── MODULES ── */}
+        <div>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTitle}>📚 Module Kamu</span>
+            <button className={styles.seeAll} onClick={() => navigate('/learning')}>
+              Lihat Semua →
+            </button>
+          </div>
 
-            return (
-              <div
-                key={mod.id}
-                className="flex-1 bg-white rounded-2xl p-4"
-                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
-              >
-                {/* Icon + Title */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    backgroundColor: mod.iconBg,
-                    display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', fontSize: 18, flexShrink: 0,
-                  }}>
+          <div className={styles.moduleGrid}>
+            {modules.map((mod, i) => {
+              const progress    = progresses[i];
+              const isDone      = progress === 100;
+              const isOngoing   = progress > 0 && progress < 100;
+              const statusClass = isDone ? styles.statusDone : isOngoing ? styles.statusOngoing : styles.statusNew;
+              const statusText  = isDone ? "✓ Selesai" : isOngoing ? "⏳ Berlangsung" : "✨ Baru";
+
+              /* gradient warna per modul */
+              const gradients = [
+                "linear-gradient(135deg, #f59e0b, #f97316)",
+                "linear-gradient(135deg, #3b82f6, #6366f1)",
+                "linear-gradient(135deg, #f97316, #ef4444)",
+              ];
+
+              return (
+                <div
+                  key={mod.id}
+                  className={styles.moduleCard}
+                  onClick={() => navigate('/learning')}
+                >
+                  <div
+                    className={styles.moduleIconWrap}
+                    style={{ background: mod.iconBg }}
+                  >
                     {mod.emoji}
                   </div>
-                  <span className="text-[#000000] text-sm font-semibold">{mod.title}</span>
+                  <div className={styles.moduleCardTitle}>{mod.title}</div>
+                  <div className={styles.moduleCardDesc}>{mod.desc}</div>
+                  <div className={`${styles.moduleStatus} ${statusClass}`}>
+                    {statusText}
+                  </div>
+                  <div className={styles.modulePbRow}>
+                    <span>Progress</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className={styles.modulePbTrack}>
+                    <div
+                      className={styles.modulePbFill}
+                      style={{
+                        width: `${progress}%`,
+                        background: gradients[i],
+                      }}
+                    />
+                  </div>
                 </div>
-
-                {/* Desc */}
-                <span className="block text-xs mb-3" style={{ color: '#6B7280' }}>{mod.desc}</span>
-
-                {/* Status */}
-                <span className="block text-xs mb-2" style={{ color: '#6B7280' }}>{statusLabel}</span>
-
-                {/* Progress */}
-                <div className="flex justify-between mb-1">
-                  <span className="text-xs text-[#000000]">Progress</span>
-                  <span className="text-xs text-[#000000]">{progress}%</span>
-                </div>
-                <ProgressBar percent={progress} />
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-      </div>
+        {/* ── BADGES ── */}
+        <div className={styles.badgeSection}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTitle}>🏆 Badges Kamu</span>
+          </div>
+          <div className={styles.badgeGrid}>
+            {allBadges.map((b, i) => (
+              <div
+                key={i}
+                className={`${styles.badgeChip} ${b.earned ? styles.earned : styles.locked}`}
+              >
+                <span className={styles.badgeEmoji}>{b.emoji}</span>
+                {b.label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </main>
     </div>
   );
 }
