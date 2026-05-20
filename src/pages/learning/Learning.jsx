@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import DebtManagementModule from "./DebtManagementModule";
 import InvestmentModule from "./InvestmentModule";
 import BudgetingModule from "./BudgetingModule";
+import "./Learning.css";
 
 const MODUL_LIST = [
   {
@@ -10,7 +11,7 @@ const MODUL_LIST = [
     title: "Manejemen Utang",
     desc: "Pelajari cara mengelola dan mengurangi utang secara efektif",
     icon: "📋",
-    iconBg: "#F59E0B",
+    iconColorClass: "module-icon-wrap--amber",
     pelajaran: "3 Pelajaran",
     durasi: "2 Jam",
     component: "debt",
@@ -21,7 +22,7 @@ const MODUL_LIST = [
     title: "Dasar Investasi",
     desc: "Pahami konsep dasar investasi untuk masa depan yang lebih baik",
     icon: "🎯",
-    iconBg: "#3B82F6",
+    iconColorClass: "module-icon-wrap--blue",
     pelajaran: "3 Pelajaran",
     durasi: "3 Jam",
     component: "investment",
@@ -32,7 +33,7 @@ const MODUL_LIST = [
     title: "Dasar Penganggaran",
     desc: "Buat dan kelola anggaran bulanan dengan mudah",
     icon: "📒",
-    iconBg: "#F97316",
+    iconColorClass: "module-icon-wrap--orange",
     pelajaran: "2 Pelajaran",
     durasi: "1.5 Jam",
     component: "budgeting",
@@ -56,8 +57,8 @@ function getLocalProgress(modulId, totalSlides) {
   return Math.round((saved.completed.length / totalSlides) * 100);
 }
 
-// Animated progress bar
-function AnimatedProgressBar({ target }) {
+// ─── Animated Progress Bar ───
+function AnimatedProgressBar({ target, done, active }) {
   const [width, setWidth] = useState(0);
   const rafRef = useRef(null);
 
@@ -85,18 +86,23 @@ function AnimatedProgressBar({ target }) {
     };
   }, [target]);
 
+  const fillClass = done
+    ? "module-progress-fill--done"
+    : active
+    ? "module-progress-fill--active"
+    : "module-progress-fill--idle";
+
   return (
-    <div style={{ height: 6, background: "#eee", borderRadius: 99, overflow: "hidden" }}>
-      <div style={{
-        width: `${width}%`, height: "100%",
-        background: width === 100 ? "#059669" : "#34D399",
-        borderRadius: 99, transition: "none",
-      }} />
+    <div className="module-progress-track">
+      <div
+        className={`module-progress-fill ${fillClass}`}
+        style={{ width: `${width}%` }}
+      />
     </div>
   );
 }
 
-// Animated counter
+// ─── Animated Counter ───
 function AnimatedCounter({ target }) {
   const [count, setCount] = useState(0);
   const rafRef = useRef(null);
@@ -128,19 +134,17 @@ function AnimatedCounter({ target }) {
   return <span>{count}</span>;
 }
 
+// ─── Main Learning Component ───
 export default function Learning() {
-  const [activeModule, setActiveModule] = useState(null);
-  const [modulSelesai, setModulSelesai] = useState([]);
-  const [userId, setUserId]             = useState(null);
-  // Simpan progress lokal ke state agar aman
+  const [activeModule, setActiveModule]   = useState(null);
+  const [modulSelesai, setModulSelesai]   = useState([]);
+  const [userId, setUserId]               = useState(null);
   const [localProgress, setLocalProgress] = useState({});
 
-  
   useEffect(() => {
     const id = localStorage.getItem("user_id");
     if (id) setUserId(id);
 
-    // Baca progress lokal semua modul sekaligus
     const progress = {};
     MODUL_LIST.forEach((m) => {
       progress[m.id] = getLocalProgress(m.id, m.totalSlides);
@@ -165,13 +169,11 @@ export default function Learning() {
   }, [userId]);
 
   const handleBack = () => {
-    // Refresh progress lokal saat kembali dari modul
     const progress = {};
     MODUL_LIST.forEach((m) => {
       progress[m.id] = getLocalProgress(m.id, m.totalSlides);
     });
     setLocalProgress(progress);
-
     setActiveModule(null);
     fetchProgress();
   };
@@ -181,116 +183,109 @@ export default function Learning() {
   if (activeModule === "budgeting")  return <BudgetingModule onBack={handleBack} />;
 
   return (
-    <div className="flex min-h-screen" style={{ background: "#F5F5F5" }}>
+    <div className="learning-root">
       <Sidebar />
 
-      <main style={{ flex: 1, padding: 32 }}>
-        <h1 style={{ fontSize: 24, fontWeight: "bold", color: "#000", marginBottom: 4 }}>
-          Learning Modules
-        </h1>
-        <p style={{ fontSize: 13, color: "#888", marginBottom: 24 }}>
-          Tingkatkan literasi finansial Anda
-        </p>
+      <main className="learning-main" style={{ minWidth: 0 }}>
+        {/* ── Header ── */}
+        <div className="learning-header">
+          <div className="learning-header-eyebrow">Financial Literacy</div>
+          <h1 className="learning-header-title">
+            Learning <span>Modules</span>
+          </h1>
+          <p className="learning-header-sub">
+            Tingkatkan literasi finansial Anda
+          </p>
+        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+        {/* ── Stats Row — hanya Total Modul ── */}
+        <div className="learning-stats-row">
+          <div className="learning-stat-chip">
+            📚 Total Modul <b>{MODUL_LIST.length}</b>
+          </div>
+        </div>
+
+        {/* ── Module Grid ── */}
+        <div className="learning-grid">
           {MODUL_LIST.map((modul) => {
-            const selesai = modulSelesai.includes(modul.id);
-            
+            const selesai  = modulSelesai.includes(modul.id);
             const progress = selesai ? 100 : (localProgress[modul.id] || 0);
+            const isActive = !selesai && progress > 0;
+
+            const pctClass = selesai
+              ? "module-progress-pct--done"
+              : isActive
+              ? "module-progress-pct--active"
+              : "module-progress-pct--idle";
+
+            const statusClass = selesai
+              ? "module-status-badge--done"
+              : isActive
+              ? "module-status-badge--active"
+              : "module-status-badge--idle";
 
             return (
               <div
                 key={modul.id}
-                style={{
-                  background: "#fff",
-                  borderRadius: 16,
-                  padding: 20,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  border: selesai ? "2px solid #34D399" : "2px solid transparent",
-                  opacity: selesai ? 0.88 : 1,
-                  position: "relative",
-                  transition: "border-color 0.4s, opacity 0.4s",
-                }}
+                className={`module-card${selesai ? " module-card--done" : ""}`}
               >
-                {/* Badge selesai */}
+                {/* Done badge */}
                 {selesai && (
-                  <div style={{
-                    position: "absolute", top: 12, right: 12,
-                    background: "#34D399", color: "#fff",
-                    fontSize: 10, fontWeight: "bold",
-                    padding: "3px 10px", borderRadius: 99,
-                    boxShadow: "0 2px 6px rgba(52,211,153,0.35)",
-                  }}>
-                    ✓ Complete
-                  </div>
+                  <div className="module-badge-done">✓ Complete</div>
                 )}
 
-                {/* Header ikon + judul */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, paddingRight: selesai ? 80 : 0 }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    background: selesai ? "#D1FAE5" : modul.iconBg,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 20, transition: "background 0.4s",
-                  }}>
-                    {selesai ? "🏆" : modul.icon}
-                  </div>
-                  <span style={{ fontSize: 15, fontWeight: "bold", color: "#000" }}>{modul.title}</span>
+                {/* Decorative corner accent */}
+                <div className="module-card-corner" aria-hidden="true">
+                  <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="72" cy="0" r="48"
+                      fill={selesai ? "rgba(52,211,153,0.07)" : "rgba(52,211,153,0.04)"}
+                    />
+                    <circle cx="72" cy="0" r="26"
+                      fill={selesai ? "rgba(52,211,153,0.1)" : "rgba(52,211,153,0.06)"}
+                    />
+                  </svg>
                 </div>
 
-                <p style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>{modul.desc}</p>
+                {/* Header: icon + title */}
+                <div className="module-card-header" style={{ paddingRight: selesai ? 90 : 0 }}>
+                  <div className={`module-icon-wrap ${selesai ? "module-icon-wrap--done" : modul.iconColorClass}`}>
+                    {selesai ? "🏆" : modul.icon}
+                  </div>
+                  <span className="module-card-title">{modul.title}</span>
+                </div>
 
-                <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-                  <span style={{ fontSize: 11, color: "#888" }}>📖 {modul.pelajaran}</span>
-                  <span style={{ fontSize: 11, color: "#888" }}>⏱ {modul.durasi}</span>
+                {/* Description */}
+                <p className="module-card-desc">{modul.desc}</p>
+
+                {/* Meta chips */}
+                <div className="module-meta">
+                  <span className="module-meta-chip">📖 {modul.pelajaran}</span>
+                  <span className="module-meta-chip">⏱ {modul.durasi}</span>
                 </div>
 
                 {/* Progress */}
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: "#666" }}>Progress</span>
-                    <span style={{ fontSize: 11, fontWeight: "bold", color: selesai ? "#059669" : "#999" }}>
-                      <AnimatedCounter target={progress} />%
-                    </span>
-                  </div>
-                  <AnimatedProgressBar target={progress} />
+                <div className="module-progress-label">
+                  <span className="module-progress-text">Progress</span>
+                  <span className={`module-progress-pct ${pctClass}`}>
+                    <AnimatedCounter target={progress} />%
+                  </span>
                 </div>
+                <AnimatedProgressBar target={progress} done={selesai} active={isActive} />
 
-                {/* Status & tombol */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 600,
-                    color: selesai ? "#059669" : "#9CA3AF",
-                    background: selesai ? "#D1FAE5" : "#F3F4F6",
-                    padding: "3px 10px", borderRadius: 99,
-                  }}>
-                    {selesai ? "🏆 Selesai" : progress > 0 ? "Sedang Berjalan" : "Belum Dimulai"}
+                {/* Footer: status + CTA */}
+                <div className="module-card-footer">
+                  <span className={`module-status-badge ${statusClass}`}>
+                    {selesai ? "🏆 Selesai" : isActive ? "Sedang Berjalan" : "Belum Dimulai"}
                   </span>
 
                   {selesai ? (
-                    <div style={{
-                      padding: "8px 20px", borderRadius: 99,
-                      background: "#F0FDF4", color: "#6EE7B7",
-                      fontSize: 12, fontWeight: "bold",
-                      cursor: "not-allowed", userSelect: "none",
-                      border: "1px solid #A7F3D0",
-                    }}>
-                      🔒 Terkunci
-                    </div>
+                    <div className="module-btn-locked">🔒 Terkunci</div>
                   ) : (
                     <button
+                      className={`module-btn ${isActive ? "module-btn--continue" : "module-btn--start"}`}
                       onClick={() => setActiveModule(modul.component)}
-                      style={{
-                        padding: "8px 20px", borderRadius: 99,
-                        border: "none", background: "#34D399",
-                        color: "#fff", fontSize: 12,
-                        fontWeight: "bold", cursor: "pointer",
-                        transition: "background 0.2s, transform 0.15s",
-                      }}
-                      onMouseEnter={(e) => { e.target.style.background = "#10B981"; e.target.style.transform = "scale(1.04)"; }}
-                      onMouseLeave={(e) => { e.target.style.background = "#34D399"; e.target.style.transform = "scale(1)"; }}
                     >
-                      {progress > 0 ? "Lanjutkan" : "Mulai"}
+                      {isActive ? "Lanjutkan →" : "Mulai →"}
                     </button>
                   )}
                 </div>
