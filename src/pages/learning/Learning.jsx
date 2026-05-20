@@ -4,6 +4,7 @@ import DebtManagementModule from "./DebtManagementModule";
 import InvestmentModule from "./InvestmentModule";
 import BudgetingModule from "./BudgetingModule";
 import "./Learning.css";
+import { getApiUrl } from "../../api";
 
 const MODUL_LIST = [
   {
@@ -154,7 +155,7 @@ export default function Learning() {
 
   const fetchProgress = () => {
     if (!userId) return;
-    fetch(`/api/get_modul.php?user_id=${userId}`)
+    fetch(getApiUrl(`/api/get_modul.php?user_id=${userId}`))
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
