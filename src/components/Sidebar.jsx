@@ -327,14 +327,9 @@ const css = `
     .sb-bottom-nav { display: none !important; }
   }
 
-  /* Spacer agar konten tidak tertutup bottom nav di mobile */
+  /* Spacer — tidak digunakan sebagai flex child, padding di .main sudah cukup */
   .sb-bottom-spacer {
-    display: none;
-    height: 60px;
-    flex-shrink: 0;
-  }
-  @media (max-width: 768px) {
-    .sb-bottom-spacer { display: block; }
+    display: none !important;
   }
 
   /* animate item masuk */
