@@ -191,7 +191,7 @@ export default function DashboardDesktop() {
             <div className={`${styles.statIconBox} ${styles.blue}`}>📈</div>
             <div>
               <div className={styles.statNum}>{Math.round(totalProgress)}%</div>
-              <div className={styles.statLabel}>Total Progress</div>
+              <div className={styles.statLabel}>Progress</div>
             </div>
           </div>
           <div className={styles.statCard}>
@@ -200,14 +200,14 @@ export default function DashboardDesktop() {
               <div className={styles.statNum}>
                 {progresses.filter(p => p === 100).length}/{modules.length}
               </div>
-              <div className={styles.statLabel}>Modul Selesai</div>
+              <div className={styles.statLabel}>Selesai</div>
             </div>
           </div>
           <div className={styles.statCard}>
             <div className={`${styles.statIconBox} ${styles.orange}`}>🔥</div>
             <div>
               <div className={styles.statNum}>{streakDays}</div>
-              <div className={styles.statLabel}>Day Streak</div>
+              <div className={styles.statLabel}>Streak</div>
             </div>
           </div>
         </div>
