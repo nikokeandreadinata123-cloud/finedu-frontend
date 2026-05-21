@@ -79,7 +79,7 @@ export default function DebtManagementModule({ onBack }) {
       const userId = localStorage.getItem("user_id");
       if (userId) {
         try {
-          await fetch(getApiUrl("/api/simpan_slide.php"), {
+          await fetch(getApiUrl("/simpan_slide.php"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -95,7 +95,7 @@ export default function DebtManagementModule({ onBack }) {
         // 3. Jika semua slide selesai, simpan modul selesai ke Railway
         if (updated.length === slides.length) {
           try {
-            await fetch(getApiUrl("/api/selesai_modul.php"), {
+            await fetch(getApiUrl("/selesai_modul.php"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
