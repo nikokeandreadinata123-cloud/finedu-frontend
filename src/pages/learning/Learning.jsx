@@ -155,7 +155,7 @@ export default function Learning() {
 
   const fetchProgress = () => {
     if (!userId) return;
-    fetch(getApiUrl(`/api/get_modul.php?user_id=${userId}`))
+    fetch(getApiUrl(`/get_modul.php?user_id=${userId}`))
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
