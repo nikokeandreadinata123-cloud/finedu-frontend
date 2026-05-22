@@ -34,6 +34,13 @@ const IconProfile = ({ color = "currentColor" }) => (
       stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
   </svg>
 );
+const IconSimulasi = ({ color = "currentColor" }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/>
+    <path d="M2 17L12 22L22 17" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M2 12L12 17L22 12" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 const IconSignOut = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
     <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9"
@@ -48,6 +55,7 @@ const menuItems = [
   { label: "Dashboard",        path: "/dashboard",  Icon: IconDashboard  },
   { label: "Learning Modules", path: "/learning",   Icon: IconLearning   },
   { label: "Calculators",      path: "/calculator", Icon: IconCalculator },
+  { label: "Simulasi",         path: "/simulasi",   Icon: IconSimulasi   },
   { label: "Profile",          path: "/profile",    Icon: IconProfile    },
 ];
 
@@ -344,6 +352,7 @@ const css = `
   .sb-item:nth-child(2) { animation-delay: .10s; }
   .sb-item:nth-child(3) { animation-delay: .15s; }
   .sb-item:nth-child(4) { animation-delay: .20s; }
+  .sb-item:nth-child(5) { animation-delay: .25s; }
 `;
 
 /* ── COMPONENT ─────────────────────────────────────────── */
@@ -419,7 +428,8 @@ export default function Sidebar() {
               </span>
               <span className="sb-bn-label">
                 {label === 'Learning Modules' ? 'Learning' :
-                 label === 'Calculators'      ? 'Calc'     : label}
+                 label === 'Calculators'      ? 'Calc'     :
+                 label === 'Simulasi'         ? 'Simulasi' : label}
               </span>
             </button>
           );
