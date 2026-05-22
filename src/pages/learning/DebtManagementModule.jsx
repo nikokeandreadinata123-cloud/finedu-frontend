@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { getApiUrl } from "../../api";
+import "./DebtManagementModule.css";
 
 const slides = [
   {
     id: 1,
     title: "Understanding Debt",
+    emoji: "💸",
+    tag: "Fundamental",
     type: "text",
     content: {
       paragraphs: [
@@ -17,6 +20,8 @@ const slides = [
   {
     id: 2,
     title: "Creating a Debt Payment Plan",
+    emoji: "📋",
+    tag: "Strategi",
     type: "text",
     content: {
       paragraphs: [
@@ -29,7 +34,12 @@ const slides = [
   {
     id: 3,
     title: "Negotiating With Creditors",
-    type: "text-list",
+    emoji: "🤝",
+    tag: "Tips & Trik",
+    type: "text-list-video",
+    youtubeId: "Ri0arQOegsc",
+    youtubeTitle: "Debt Management | Loans and Debt | Financial Literacy | Khan Academy",
+    youtubeChannel: "Khan Academy",
     content: {
       intro:
         "Bernegosiasi dengan kreditur adalah keterampilan penting yang dapat membantu Anda mendapatkan syarat pembayaran yang lebih baik. Berikut adalah langkah-langkah yang dapat Anda lakukan:",
@@ -48,8 +58,6 @@ const slides = [
 ];
 
 const MODUL_ID = 1;
-const ACCENT = "#1EC99B";
-const ACCENT_LIGHT = "#E1F5EE";
 
 export default function DebtManagementModule({ onBack }) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -66,157 +74,178 @@ export default function DebtManagementModule({ onBack }) {
   const isLast = currentSlide === slides.length - 1;
   const progressPercent = Math.round((completedSlides.length / slides.length) * 100);
 
-  // ─── Simpan slide selesai ke localStorage DAN Railway ───
   const handleMarkComplete = async () => {
     if (!isCompleted) {
       const updated = [...completedSlides, slide.id];
       setCompletedSlides(updated);
-
-      // 1. Simpan ke localStorage
       localStorage.setItem(`modul_${MODUL_ID}`, JSON.stringify({ completed: updated }));
-
-      // 2. Kirim slide selesai ke Railway
       const userId = localStorage.getItem("user_id");
       if (userId) {
         try {
           await fetch(getApiUrl("/simpan_slide.php"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              user_id: userId,
-              modul_id: MODUL_ID,
-              slide_id: slide.id,
-            }),
+            body: JSON.stringify({ user_id: userId, modul_id: MODUL_ID, slide_id: slide.id }),
           });
-        } catch (err) {
-          console.error("Gagal simpan slide:", err);
-        }
-
-        // 3. Jika semua slide selesai, simpan modul selesai ke Railway
+        } catch (err) { console.error("Gagal simpan slide:", err); }
         if (updated.length === slides.length) {
           try {
             await fetch(getApiUrl("/selesai_modul.php"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                user_id: userId,
-                modul_id: MODUL_ID,
-              }),
+              body: JSON.stringify({ user_id: userId, modul_id: MODUL_ID }),
             });
-          } catch (err) {
-            console.error("Gagal simpan modul selesai:", err);
-          }
+          } catch (err) { console.error("Gagal simpan modul selesai:", err); }
         }
       }
     }
-
-    if (!isLast) {
-      setTimeout(() => setCurrentSlide((prev) => prev + 1), 200);
-    }
+    if (!isLast) setTimeout(() => setCurrentSlide((prev) => prev + 1), 200);
   };
 
   const goToSlide = (idx) => setCurrentSlide(idx);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FBF9F9", fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif", color: "#1A1A2E" }}>
+    <div className="dm-root">
       {/* Top Bar */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #E8ECF0", padding: "0 2rem", display: "flex", alignItems: "center", gap: 16, height: 60, position: "sticky", top: 0, zIndex: 100 }}>
+      <div className="dm-topbar">
         {onBack && (
-          <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: "#6B7280", fontSize: 14, padding: "4px 8px", borderRadius: 6 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={onBack} className="dm-back-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
             Kembali
           </button>
         )}
-        <span style={{ fontWeight: 700, fontSize: 16, color: "#1A1A2E" }}>Manajemen Utang</span>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, maxWidth: 400, margin: "0 auto" }}>
-          <div style={{ flex: 1, height: 6, background: "#E8ECF0", borderRadius: 99, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${progressPercent}%`, background: ACCENT, borderRadius: 99, transition: "width 0.4s ease" }} />
+        <span className="dm-topbar-title">Manajemen Utang</span>
+        <div className="dm-progress-wrap">
+          <div className="dm-progress-track">
+            <div className="dm-progress-fill" style={{ width: `${progressPercent}%` }} />
           </div>
-          <span style={{ fontSize: 12, color: "#6B7280", whiteSpace: "nowrap" }}>{completedSlides.length}/{slides.length} selesai</span>
+          <span className="dm-progress-label">{completedSlides.length}/{slides.length} selesai</span>
         </div>
       </div>
 
-      {/* Main Layout */}
-      <div style={{ display: "flex", maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem", gap: "1.5rem" }}>
-        {/* Content Area */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ background: "#fff", borderRadius: 12, padding: "1.25rem 1.75rem", marginBottom: "1rem", border: "1px solid #E8ECF0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 11, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>
-                Pelajaran {slide.id} dari {slides.length}
-              </span>
-              {isCompleted && (
-                <span style={{ background: ACCENT_LIGHT, color: "#0F6E56", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99 }}>✓ Selesai</span>
-              )}
+      {/* Body */}
+      <div className="dm-body">
+        <div className="dm-main">
+          {/* Slide Header Card */}
+          <div className="dm-card">
+            <div className="dm-slide-header">
+              <div className="dm-slide-emoji">{slide.emoji}</div>
+              <div className="dm-slide-meta">
+                <div className="dm-slide-tags">
+                  <span className="dm-num">Pelajaran {slide.id} dari {slides.length}</span>
+                  <span className="dm-tag">{slide.tag}</span>
+                  {isCompleted && <span className="dm-done-badge">✓ Selesai</span>}
+                </div>
+                <h1 className="dm-slide-title">{slide.title}</h1>
+              </div>
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "#1A1A2E" }}>{slide.title}</h1>
           </div>
 
-          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8ECF0", overflow: "hidden" }}>
-            <div style={{ padding: "1.75rem" }}>
+          {/* Content Card */}
+          <div className="dm-card">
+            <div className="dm-content">
               {slide.type === "text" && slide.content.paragraphs?.map((p, i) => (
-                <p key={i} style={{ fontSize: 14, lineHeight: 1.8, color: "#374151", marginBottom: "1rem" }}>{p}</p>
+                <p key={i} className="dm-para">{p}</p>
               ))}
-              {slide.type === "text-list" && (
+
+              {slide.type === "text-list-video" && (
                 <>
-                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "#374151", marginBottom: "1rem" }}>{slide.content.intro}</p>
-                  <ol style={{ paddingLeft: "1.5rem", marginBottom: "1rem" }}>
+                  <p className="dm-intro-text">{slide.content.intro}</p>
+                  <ul className="dm-list">
                     {slide.content.items.map((item, i) => (
-                      <li key={i} style={{ fontSize: 14, lineHeight: 1.8, color: "#374151", marginBottom: 6 }}>{item}</li>
+                      <li key={i} className="dm-list-item">
+                        <span className="dm-list-dot">{i + 1}</span>
+                        <span>{item}</span>
+                      </li>
                     ))}
-                  </ol>
-                  <div style={{ background: ACCENT_LIGHT, padding: "1rem 1.25rem", borderLeft: `3px solid ${ACCENT}` }}>
-                    <p style={{ fontSize: 14, lineHeight: 1.7, color: "#0F6E56", margin: 0 }}>{slide.content.closing}</p>
+                  </ul>
+                  <div className="dm-closing-box">
+                    <p className="dm-closing-text">💡 {slide.content.closing}</p>
+                  </div>
+
+                  {/* Video Section */}
+                  <div className="dm-video-section">
+                    <div className="dm-video-label">
+                      <span className="dm-video-label-text">Video Pembelajaran</span>
+                      <span className="dm-yt-badge">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        YouTube
+                      </span>
+                    </div>
+                    <div className="dm-video-frame">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${slide.youtubeId}?rel=0&modestbranding=1`}
+                        title={slide.youtubeTitle}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                    <div className="dm-video-source">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#EF4444">
+                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                      </svg>
+                      <span>Sumber:</span>
+                      <a href={`https://www.youtube.com/watch?v=${slide.youtubeId}`} target="_blank" rel="noopener noreferrer">
+                        {slide.youtubeTitle} — {slide.youtubeChannel}
+                      </a>
+                    </div>
                   </div>
                 </>
               )}
             </div>
 
             {/* Nav Buttons */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.75rem", borderTop: "1px solid #E8ECF0", background: "#FAFBFC" }}>
-              <button onClick={() => setCurrentSlide((p) => Math.max(0, p - 1))} disabled={isFirst} style={{ padding: "8px 18px", borderRadius: 20, border: "1px solid #D1D5DB", background: isFirst ? "#F3F4F6" : "#fff", color: isFirst ? "#9CA3AF" : "#374151", fontSize: 13, fontWeight: 500, cursor: isFirst ? "not-allowed" : "pointer" }}>
-                &lt; Sebelumnya
+            <div className="dm-nav">
+              <button onClick={() => setCurrentSlide((p) => Math.max(0, p - 1))} disabled={isFirst} className="dm-btn-prev">
+                ← Sebelumnya
               </button>
-              <button onClick={handleMarkComplete} style={{ padding: "8px 24px", borderRadius: 20, border: "none", background: isCompleted ? "#E8ECF0" : ACCENT, color: isCompleted ? "#6B7280" : "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "background 0.2s" }}>
-                {isCompleted ? "✓ Sudah Selesai" : "Tandai Selesai"}
+              <button onClick={handleMarkComplete} className={`dm-btn-complete ${isCompleted ? "done" : "active"}`}>
+                {isCompleted ? "✓ Sudah Selesai" : "Tandai Selesai ✦"}
               </button>
-              <button onClick={() => setCurrentSlide((p) => Math.min(slides.length - 1, p + 1))} disabled={isLast} style={{ padding: "8px 18px", borderRadius: 20, border: "1px solid #D1D5DB", background: isLast ? "#F3F4F6" : "#fff", color: isLast ? "#9CA3AF" : "#374151", fontSize: 13, fontWeight: 500, cursor: isLast ? "not-allowed" : "pointer" }}>
-                Selanjutnya &gt;
+              <button onClick={() => setCurrentSlide((p) => Math.min(slides.length - 1, p + 1))} disabled={isLast} className="dm-btn-next">
+                Selanjutnya →
               </button>
             </div>
           </div>
         </div>
 
         {/* Sidebar */}
-        <div style={{ width: 260, flexShrink: 0 }}>
-          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8ECF0", overflow: "hidden", position: "sticky", top: 76 }}>
-            <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #E8ECF0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", margin: 0 }}>Daftar Pelajaran</h2>
-              <span style={{ background: ACCENT_LIGHT, color: "#0F6E56", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99 }}>{completedSlides.length}/{slides.length}</span>
+        <div className="dm-sidebar">
+          <div className="dm-sidebar-inner">
+            <div className="dm-sidebar-header">
+              <h2 className="dm-sidebar-title">Daftar Pelajaran</h2>
+              <span className="dm-sidebar-count">{completedSlides.length}/{slides.length}</span>
             </div>
-            <div style={{ padding: "0.5rem" }}>
+            <div className="dm-sidebar-list">
               {slides.map((s, idx) => {
                 const isActive = currentSlide === idx;
                 const isDone = completedSlides.includes(s.id);
                 return (
-                  <button key={s.id} onClick={() => goToSlide(idx)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: 8, border: "none", background: isActive ? ACCENT_LIGHT : isDone ? "#F9FAFB" : "transparent", cursor: "pointer", textAlign: "left", marginBottom: 4 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? "#0F6E56" : isDone ? "#374151" : "#6B7280", margin: 0, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</p>
-                      <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0, marginTop: 2 }}>📄 Materi</p>
+                  <button
+                    key={s.id}
+                    onClick={() => goToSlide(idx)}
+                    className={`dm-sidebar-btn ${isActive ? "active" : isDone ? "done" : ""}`}
+                  >
+                    <span className="dm-sidebar-emoji">{s.emoji}</span>
+                    <div className="dm-sidebar-info">
+                      <p className="dm-sidebar-name">{s.title}</p>
+                      <p className="dm-sidebar-sub">📄 Materi{s.type === "text-list-video" ? " + 🎬 Video" : ""}</p>
                     </div>
-                    <span style={{ marginLeft: 8, padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 600, background: isDone ? ACCENT : isActive ? ACCENT : "#E8ECF0", color: isDone || isActive ? "#fff" : "#9CA3AF", whiteSpace: "nowrap", flexShrink: 0 }}>
-                      {isDone ? "Selesai" : isActive ? "Aktif" : "Materi"}
+                    <span className={`dm-sidebar-status ${isDone ? "done-s" : isActive ? "active-s" : "idle-s"}`}>
+                      {isDone ? "✓" : isActive ? "Aktif" : "—"}
                     </span>
                   </button>
                 );
               })}
             </div>
             {completedSlides.length === slides.length && (
-              <div style={{ margin: "0.5rem", padding: "12px", background: ACCENT, borderRadius: 8, textAlign: "center" }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>🎉 Modul Selesai!</p>
-                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: "4px 0 0" }}>Anda telah menyelesaikan semua materi</p>
+              <div className="dm-complete-banner">
+                <p className="dm-complete-title">🎉 Modul Selesai!</p>
+                <p className="dm-complete-sub">Semua materi telah dipelajari</p>
               </div>
             )}
           </div>
