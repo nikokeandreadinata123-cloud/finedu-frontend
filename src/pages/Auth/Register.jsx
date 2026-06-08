@@ -74,6 +74,9 @@ export default function Register() {
       });
       const data = await res.json();
       if (data.status === "success") {
+        // ✅ FIX: Bersihkan semua data user lama agar user baru mulai dari 0
+        localStorage.clear();
+
         setSuccess("Akun berhasil dibuat! Silakan login.");
         setTimeout(() => navigate('/login'), 1500);
       } else { setError(data.message || "Registrasi gagal."); }
