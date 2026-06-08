@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../../context/UserContext";
 import { API_BASE_URL } from "../../api";
 import styles from "./Register.module.css";
 
@@ -33,6 +34,7 @@ function getPasswordStrength(password) {
 
 export default function Register() {
   const navigate = useNavigate();
+  const { login } = useUser();
 
   const [fullName,        setFullName]        = useState('');
   const [email,           setEmail]           = useState('');
@@ -62,8 +64,8 @@ export default function Register() {
     if (!agree)    { setError("Harap setujui Syarat & Ketentuan terlebih dahulu"); return; }
     if (!hasUpper) { setError("Password harus mengandung minimal 1 huruf kapital (A-Z)!"); return; }
     if (!hasLower) { setError("Password harus mengandung minimal 1 huruf kecil (a-z)!"); return; }
-    if (password.length < 6)         { setError("Password minimal 6 karakter!"); return; }
-    if (password !== confirmPassword) { setError("Password dan konfirmasi password tidak cocok!"); return; }
+    if (password.length < 6)          { setError("Password minimal 6 karakter!"); return; }
+    if (password !== confirmPassword)  { setError("Password dan konfirmasi password tidak cocok!"); return; }
 
     setLoading(true);
     try {
@@ -73,17 +75,32 @@ export default function Register() {
         body: JSON.stringify({ name: fullName, email, phone, password }),
       });
       const data = await res.json();
+
       if (data.status === "success") {
-        // ✅ FIX: Bersihkan semua data user lama agar user baru mulai dari 0
+        // ✅ Bersihkan data user lama
         localStorage.clear();
 
-        setSuccess("Akun berhasil dibuat! Silakan login.");
-        setTimeout(() => navigate('/login'), 1500);
-      } else { setError(data.message || "Registrasi gagal."); }
+        // ✅ Simpan token & user baru langsung (auto-login)
+        localStorage.setItem("token",   data.token);
+        localStorage.setItem("user",    JSON.stringify(data.user));
+        localStorage.setItem("user_id", data.user.id);
+        localStorage.setItem("streak",  data.streak ?? 1);
+
+        // ✅ Set context user
+        login(data.user.email, data.user.name, data.user);
+
+        setSuccess("Akun berhasil dibuat! Mengalihkan ke dashboard...");
+        // ✅ Langsung ke dashboard, tidak perlu login lagi
+        setTimeout(() => navigate('/dashboard'), 1000);
+      } else {
+        setError(data.message || "Registrasi gagal.");
+      }
     } catch (err) {
       console.error(err);
-      setError("Gagal terhubung ke server. Pastikan XAMPP aktif.");
-    } finally { setLoading(false); }
+      setError("Gagal terhubung ke server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -146,7 +163,6 @@ export default function Register() {
         <div className={`${styles.deco} ${styles.deco2}`} />
 
         <div className={styles.wrap}>
-          {/* Mobile header */}
           <div className={styles.mobileHeader}>
             <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
               <img src="/logo-finedu.jpeg" alt="Logo"
@@ -169,12 +185,11 @@ export default function Register() {
             </div>
 
             <h1 className={styles.title}>Create Account ✨</h1>
-            <p className={styles.subtitle}>Daftar & mulai perjalanan finansial kamu sekarang</p>
+            <p className={styles.subtitle}>Daftar & langsung masuk ke dashboard kamu</p>
 
             {error   && <div className={`${styles.alert} ${styles.alertErr}`}><span>⚠️</span><span>{error}</span></div>}
             {success && <div className={`${styles.alert} ${styles.alertOk}`}><span>🎉</span><span>{success}</span></div>}
 
-            {/* Full Name */}
             <label className={styles.label}>Full Name</label>
             <div className={styles.inputGroup}>
               <span className={styles.inputIcon}>👤</span>
@@ -182,7 +197,6 @@ export default function Register() {
                 value={fullName} onChange={e => setFullName(e.target.value)} />
             </div>
 
-            {/* Email */}
             <label className={styles.label}>Email Address</label>
             <div className={styles.inputGroup}>
               <span className={styles.inputIcon}>✉️</span>
@@ -190,7 +204,6 @@ export default function Register() {
                 value={email} onChange={e => setEmail(e.target.value)} />
             </div>
 
-            {/* Phone */}
             <label className={styles.label}>
               Phone Number <span className={styles.labelOpt}>(opsional)</span>
             </label>
@@ -200,7 +213,6 @@ export default function Register() {
                 value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
 
-            {/* Password */}
             <label className={styles.label}>Password</label>
             <div className={styles.inputGroup}>
               <span className={styles.inputIcon}>🔒</span>
@@ -214,7 +226,6 @@ export default function Register() {
               </button>
             </div>
 
-            {/* Strength */}
             {password.length > 0 && (
               <>
                 <div className={styles.strBars}>
@@ -239,7 +250,6 @@ export default function Register() {
               </>
             )}
 
-            {/* Confirm Password */}
             <label className={styles.label}>Confirm Password</label>
             <div className={styles.inputGroup} style={{
               boxShadow: pwMatch ? '0 0 0 2px #34D399' : pwMismatch ? '0 0 0 2px #ef4444' : 'none',
@@ -256,7 +266,6 @@ export default function Register() {
               </button>
             </div>
 
-            {/* Match indicator */}
             {confirmPassword.length > 0 && (
               <div className={styles.matchRow} style={{ color: pwMatch ? '#16a34a' : '#ef4444' }}>
                 <div className={styles.matchDot} style={{ background: pwMatch ? '#16a34a' : '#ef4444' }} />
@@ -264,7 +273,6 @@ export default function Register() {
               </div>
             )}
 
-            {/* Checkbox */}
             <label className={styles.checkboxContainer}>
               <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} />
               <span className={styles.checkboxText}>
