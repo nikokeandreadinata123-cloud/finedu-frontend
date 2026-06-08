@@ -81,13 +81,15 @@ export default function Register() {
         localStorage.clear();
 
         // Simpan token & user baru langsung (auto-login)
-        localStorage.setItem("token",   data.token);
-        localStorage.setItem("user",    JSON.stringify(data.user));
+        localStorage.setItem("token",   data.token ?? "");
+        localStorage.setItem("user",    JSON.stringify(data.user ?? {}));
         localStorage.setItem("user_id", String(data.user?.id ?? ""));
         localStorage.setItem("streak",  data.streak ?? 1);
 
-        // Set context user
-        login(data.user.email, data.user.name, data.user);
+        // Set context user (dengan pengecekan aman)
+        if (data.user?.email) {
+          login(data.user.email, data.user.name, data.user);
+        }
 
         setSuccess("Akun berhasil dibuat! Mengalihkan ke dashboard...");
         // Langsung ke dashboard, tidak perlu login lagi
