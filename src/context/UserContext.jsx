@@ -2,10 +2,22 @@ import React, { createContext, useContext, useState } from "react";
 
 const UserContext = createContext(null);
 
+// ✅ Helper: safe JSON parse agar tidak crash jika value "undefined" atau rusak
+function safeParse(key) {
+  try {
+    const val = localStorage.getItem(key);
+    if (!val || val === "undefined" || val === "null") return null;
+    return JSON.parse(val);
+  } catch {
+    localStorage.removeItem(key);
+    return null;
+  }
+}
+
 export function UserProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : { id: null, name: '', email: '', phone: '' };
+    const stored = safeParse("user");
+    return stored || { id: null, name: '', email: '', phone: '' };
   });
 
   const login = (email, name = '', userData = {}) => {
@@ -16,8 +28,8 @@ export function UserProvider({ children }) {
       phone: userData.phone || '',
     };
     setUser(newUser);
-    localStorage.setItem("user", JSON.stringify(newUser));
-    localStorage.setItem("user_id", userData.id); 
+    localStorage.setItem("user",    JSON.stringify(newUser));
+    localStorage.setItem("user_id", userData.id);
   };
 
   const register = (name, email, phone) => {
@@ -28,16 +40,14 @@ export function UserProvider({ children }) {
 
   const logout = () => {
     setUser({ id: null, name: '', email: '', phone: '' });
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user_id"); 
+    localStorage.clear(); // ✅ bersihkan semua data saat logout
   };
 
   const updateUser = (updatedData) => {
     setUser((prev) => {
       const merged = { ...prev, ...updatedData };
       localStorage.setItem("user", JSON.stringify(merged));
-      if (updatedData.id) localStorage.setItem("user_id", updatedData.id); 
+      if (updatedData.id) localStorage.setItem("user_id", updatedData.id);
       return merged;
     });
   };
