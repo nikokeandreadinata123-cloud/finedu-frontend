@@ -73,9 +73,19 @@ export default function Login() {
       if (data.status === "success") {
         const userId = data.user?.id ?? data.user?.user_id ?? data.id ?? null;
         if (!userId) { setError("User ID tidak ditemukan."); setLoading(false); return; }
+
+        // ✅ FIX: Bersihkan data user lama sebelum simpan data user baru
+        localStorage.clear();
+
         localStorage.setItem("token",   data.token);
         localStorage.setItem("user",    JSON.stringify(data.user));
         localStorage.setItem("user_id", userId);
+
+        // ✅ Simpan streak dari response backend
+        if (data.streak !== undefined) {
+          localStorage.setItem("streak", data.streak);
+        }
+
         login(data.user.email, data.user.name, data.user);
         navigate('/dashboard');
       } else { setError(data.message || "Login gagal."); }
