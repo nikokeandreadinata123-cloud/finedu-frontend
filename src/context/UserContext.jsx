@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 
 const UserContext = createContext(null);
 
-// Helper: safe JSON parse agar tidak crash jika value "undefined" atau rusak
+// ✅ Helper: safe JSON parse agar tidak crash jika value "undefined" atau rusak
 function safeParse(key) {
   try {
     const val = localStorage.getItem(key);
@@ -21,17 +21,19 @@ export function UserProvider({ children }) {
   });
 
   const login = (email, name = '', userData = {}) => {
-    // ✅ Buat object user baru
     const newUser = {
       id:    userData.id    || null,
       name:  name || email.split('@')[0],
       email: email,
       phone: userData.phone || '',
     };
-    // ✅ Simpan ke localStorage
+
+    // ✅ Clear semua data user lama dulu sebelum simpan user baru
+    localStorage.clear();
+
     localStorage.setItem("user",    JSON.stringify(newUser));
     localStorage.setItem("user_id", String(userData.id ?? ""));
-    // ✅ Update state dengan object baru (paksa re-render)
+
     setUser({ ...newUser });
   };
 
