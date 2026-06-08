@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 
 const UserContext = createContext(null);
 
-// ✅ Helper: safe JSON parse agar tidak crash jika value "undefined" atau rusak
+// Helper: safe JSON parse agar tidak crash jika value "undefined" atau rusak
 function safeParse(key) {
   try {
     const val = localStorage.getItem(key);
@@ -21,15 +21,18 @@ export function UserProvider({ children }) {
   });
 
   const login = (email, name = '', userData = {}) => {
+    // ✅ Buat object user baru
     const newUser = {
       id:    userData.id    || null,
       name:  name || email.split('@')[0],
       email: email,
       phone: userData.phone || '',
     };
-    setUser(newUser);
+    // ✅ Simpan ke localStorage
     localStorage.setItem("user",    JSON.stringify(newUser));
-    localStorage.setItem("user_id", userData.id);
+    localStorage.setItem("user_id", String(userData.id ?? ""));
+    // ✅ Update state dengan object baru (paksa re-render)
+    setUser({ ...newUser });
   };
 
   const register = (name, email, phone) => {
@@ -40,7 +43,7 @@ export function UserProvider({ children }) {
 
   const logout = () => {
     setUser({ id: null, name: '', email: '', phone: '' });
-    localStorage.clear(); // ✅ bersihkan semua data saat logout
+    localStorage.clear();
   };
 
   const updateUser = (updatedData) => {
