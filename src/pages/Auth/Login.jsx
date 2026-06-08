@@ -81,9 +81,12 @@ export default function Login() {
         localStorage.setItem("user",    JSON.stringify(data.user));
         localStorage.setItem("user_id", userId);
 
-        // ✅ Simpan streak dari response backend
+        // ✅ Simpan streak dan last_login_date dari response backend
         if (data.streak !== undefined) {
           localStorage.setItem("streak", data.streak);
+        }
+        if (data.last_login_date) {
+          localStorage.setItem("last_login_date", data.last_login_date);
         }
 
         login(data.user.email, data.user.name, data.user);
