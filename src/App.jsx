@@ -17,33 +17,55 @@ import Calculator from "./pages/Calculator/CalculatorDesktop.jsx";
 import Learning   from "./pages/learning/Learning.jsx";
 import SimulasiKelolaKeuangan from "./pages/Simulasi/SimulasiKelolaKeuangan.jsx";
 
-// ── Komponen: Popup Sign Up setelah 30 menit tidak login ──
+// ── Popup reminder ──
+// Muncul untuk:
+// 1. User yang belum punya akun (tidak ada data di localStorage)
+// 2. User yang sudah punya akun tapi sudah 30 hari tidak login
 function SignUpReminder() {
   const { user } = useUser();
   const navigate  = useNavigate();
   const location  = useLocation();
-  const [show, setShow] = useState(false);
+  const [show, setShow]       = useState(false);
+  const [isOldUser, setIsOldUser] = useState(false); // untuk bedakan pesan popup
 
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isLoggedIn = !!user?.id;
 
   useEffect(() => {
-    // Hanya tampilkan reminder jika belum login dan bukan di halaman auth
-    if (isLoggedIn || isAuthPage) return;
+    if (isLoggedIn || isAuthPage) {
+      setShow(false);
+      return;
+    }
 
-    const THIRTY_MINUTES = 30 * 60 * 1000;
-    const timer = setTimeout(() => {
-      setShow(true);
-    }, THIRTY_MINUTES);
+    // Cek apakah user lama yang sudah lama tidak login
+    const lastLoginDate = localStorage.getItem("last_login_date");
+    const hasAccount    = localStorage.getItem("user_id"); // pernah login sebelumnya
 
-    return () => clearTimeout(timer);
-  }, [isLoggedIn, isAuthPage]);
+    if (hasAccount && lastLoginDate) {
+      // User punya akun — cek apakah sudah 30 hari tidak login
+      const last      = new Date(lastLoginDate);
+      const today     = new Date();
+      const diffDays  = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+
+      if (diffDays >= 30) {
+        setIsOldUser(true);
+        setShow(true);
+      }
+    } else if (!hasAccount) {
+      // Belum punya akun sama sekali — tampilkan popup setelah 5 detik
+      const timer = setTimeout(() => {
+        setIsOldUser(false);
+        setShow(true);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, isAuthPage, location.pathname]);
 
   if (!show) return null;
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 9999, padding: '20px',
     }}>
@@ -51,35 +73,61 @@ function SignUpReminder() {
         background: '#fff', borderRadius: '20px', padding: '36px 32px',
         maxWidth: '400px', width: '100%', textAlign: 'center',
         boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        animation: 'fadeInUp 0.3s ease',
       }}>
-        <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎯</div>
+        <div style={{ fontSize: '52px', marginBottom: '12px' }}>
+          {isOldUser ? '👋' : '🎯'}
+        </div>
         <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-          Yuk, Mulai Belajar!
+          {isOldUser ? 'Sudah Lama Tidak Belajar!' : 'Yuk, Mulai Belajar!'}
         </h2>
         <p style={{ color: '#64748b', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
-          Buat akun gratis dan mulai perjalanan literasi keuangan kamu bersama ribuan pengguna FinEdu.
+          {isOldUser
+            ? 'Kamu sudah 30 hari tidak login. Yuk kembali dan lanjutkan perjalanan literasi keuangan kamu! 🔥'
+            : 'Buat akun gratis dan mulai perjalanan literasi keuangan kamu bersama ribuan pengguna FinEdu.'
+          }
         </p>
+
+        {isOldUser ? (
+          // User lama → tombol Sign In
+          <button
+            onClick={() => { setShow(false); navigate('/login'); }}
+            style={{
+              width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer',
+              marginBottom: '10px',
+            }}
+          >
+            Login Sekarang →
+          </button>
+        ) : (
+          // User baru → tombol Daftar utama
+          <button
+            onClick={() => { setShow(false); navigate('/register'); }}
+            style={{
+              width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+              background: 'linear-gradient(135deg, #34D399, #059669)',
+              color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer',
+              marginBottom: '10px',
+            }}
+          >
+            Daftar Sekarang →
+          </button>
+        )}
+
         <button
-          onClick={() => { setShow(false); navigate('/register'); }}
+          onClick={() => { setShow(false); navigate(isOldUser ? '/login' : '/register'); }}
           style={{
-            width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
-            background: 'linear-gradient(135deg, #34D399, #059669)',
-            color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer',
-            marginBottom: '10px',
+            width: '100%', padding: '12px', borderRadius: '12px',
+            border: '1.5px solid #e2e8f0', background: 'transparent',
+            color: '#475569', fontWeight: 600, fontSize: '14px',
+            cursor: 'pointer', marginBottom: '10px',
           }}
         >
-          Daftar Sekarang →
+          {isOldUser ? 'Daftar Akun Baru' : 'Sudah punya akun? Sign In'}
         </button>
-        <button
-          onClick={() => { setShow(false); navigate('/login'); }}
-          style={{
-            width: '100%', padding: '12px', borderRadius: '12px', border: '1.5px solid #e2e8f0',
-            background: 'transparent', color: '#475569', fontWeight: 600,
-            fontSize: '14px', cursor: 'pointer', marginBottom: '10px',
-          }}
-        >
-          Sudah punya akun? Sign In
-        </button>
+
         <button
           onClick={() => setShow(false)}
           style={{
@@ -90,11 +138,18 @@ function SignUpReminder() {
           Nanti saja
         </button>
       </div>
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
 
-// ── Komponen: Protected Route (hanya bisa diakses jika sudah login) ──
+// ── Protected Route ──
 function ProtectedRoute({ children }) {
   const { user } = useUser();
   if (!user?.id) {
@@ -110,7 +165,7 @@ function AnimatedRoutes() {
     <>
       <SignUpReminder />
       <Routes location={location} key={location.pathname}>
-        {/* ✅ Halaman awal redirect ke /login */}
+        {/* Halaman awal → /login */}
         <Route path="/"           element={<Navigate to="/login" replace />} />
 
         {/* Halaman publik */}
