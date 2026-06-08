@@ -76,7 +76,7 @@ export default function Register() {
       });
       const data = await res.json();
 
-      if (data.status === "success") {
+      if (data.status === "success" && data.user && data.user.id) {
         // ✅ Bersihkan data user lama
         localStorage.clear();
 
