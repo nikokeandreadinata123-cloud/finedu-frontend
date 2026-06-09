@@ -35,10 +35,10 @@ const MODUL_LIST = [
     desc: "Buat dan kelola anggaran bulanan dengan mudah",
     icon: "📒",
     iconColorClass: "module-icon-wrap--orange",
-    pelajaran: "2 Pelajaran",
+    pelajaran: "3 Pelajaran",
     durasi: "1.5 Jam",
     component: "budgeting",
-    totalSlides: 2,
+    totalSlides: 3,
   },
 ];
 
