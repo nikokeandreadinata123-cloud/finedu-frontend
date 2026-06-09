@@ -28,9 +28,8 @@ export function UserProvider({ children }) {
       phone: userData.phone || '',
     };
 
-    // ✅ Clear semua data user lama dulu sebelum simpan user baru
-    localStorage.clear();
-
+    // ✅ Overwrite data user saja, jangan clear karena token & streak
+    // sudah disimpan duluan oleh Login.jsx/Register.jsx
     localStorage.setItem("user",    JSON.stringify(newUser));
     localStorage.setItem("user_id", String(userData.id ?? ""));
 
