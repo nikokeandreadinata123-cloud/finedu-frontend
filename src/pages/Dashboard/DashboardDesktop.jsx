@@ -59,6 +59,7 @@ const ProgressBar = ({ percent, color }) => {
 // ✅ FIX: Pakai user_id sebagai prefix key agar progress tidak tercampur antar user
 function getModuleProgress(userId, modulId, totalSlides) {
   try {
+    // Coba baca dengan prefix user_id dulu
     const keyWithUser = `user_${userId}_modul_${modulId}`;
     const keyLegacy   = `modul_${modulId}`;
     const raw = localStorage.getItem(keyWithUser) || localStorage.getItem(keyLegacy);
@@ -79,6 +80,14 @@ const quotes = [
   "Uangmu, hidupmu, pilihanmu. 💡",
 ];
 
+const allBadges = [
+  { emoji: "🏅", label: "First Step",    earned: true  },
+  { emoji: "🔥", label: "3-Day Streak",  earned: true  },
+  { emoji: "📚", label: "Modul Selesai", earned: false },
+  { emoji: "🎯", label: "Quiz Master",   earned: false },
+  { emoji: "💎", label: "Top Learner",   earned: false },
+];
+
 export default function DashboardDesktop() {
   const { user } = useUser();
   const navigate  = useNavigate();
@@ -95,28 +104,18 @@ export default function DashboardDesktop() {
   const modules = [
     { id: 1, title: "Manajemen Utang",    desc: "Pelajari cara mengelola dan mengurangi utang secara efektif",        emoji: "📋", iconBg: "#FFF7ED", iconColor: "#F59E0B", totalSlides: 3 },
     { id: 2, title: "Dasar Investasi",    desc: "Pahami konsep dasar investasi untuk masa depan yang lebih baik",    emoji: "🎯", iconBg: "#EFF6FF", iconColor: "#3B82F6", totalSlides: 3 },
-    { id: 3, title: "Dasar Penganggaran", desc: "Buat dan kelola anggaran bulanan dengan mudah",                      emoji: "📒", iconBg: "#FFF7ED", iconColor: "#F97316", totalSlides: 2 },
+    { id: 3, title: "Dasar Penganggaran", desc: "Buat dan kelola anggaran bulanan dengan mudah",                      emoji: "📒", iconBg: "#FFF7ED", iconColor: "#F97316", totalSlides: 3 },
   ];
 
+  // ✅ FIX: Kirim userId ke getModuleProgress agar tiap user punya progress sendiri
   const progresses    = modules.map(m => getModuleProgress(userId, m.id, m.totalSlides));
   const totalProgress = progresses.reduce((a, b) => a + b, 0) / modules.length;
 
   const todayQuote = quotes[new Date().getDay() % quotes.length];
 
-  // ✅ FIX: Baca streak dari UserContext dulu, fallback ke localStorage
-  const streakRaw = user?.streak ?? localStorage.getItem("streak") ?? 0;
-  const streakDays = isNaN(parseInt(streakRaw, 10)) ? 0 : parseInt(streakRaw, 10);
+  // ✅ FIX: Ambil streak dari localStorage yang sudah disimpan saat login/register
+  const streakDays = parseInt(localStorage.getItem("streak") || "0", 10);
   const weekDays   = ["S","M","T","W","T"];
-
-  // ✅ FIX: Badge dinamis berdasarkan data user yang sebenarnya
-  const modulesCompleted = progresses.filter(p => p === 100).length;
-  const allBadges = [
-    { emoji: "🏅", label: "First Step",    earned: streakDays >= 1                },
-    { emoji: "🔥", label: "3-Day Streak",  earned: streakDays >= 3                },
-    { emoji: "📚", label: "Modul Selesai", earned: modulesCompleted >= 1          },
-    { emoji: "🎯", label: "Quiz Master",   earned: false                          },
-    { emoji: "💎", label: "Top Learner",   earned: modulesCompleted >= modules.length },
-  ];
 
   return (
     <div className={styles.root}>
@@ -152,7 +151,7 @@ export default function DashboardDesktop() {
           <div className={styles.statCard}>
             <div className={`${styles.statIconBox} ${styles.orange}`}>🔥</div>
             <div>
-              {/* ✅ Streak dari UserContext + fallback localStorage */}
+              {/* ✅ Streak sekarang dari localStorage, bukan hardcode */}
               <div className={styles.statNum}>{streakDays}</div>
               <div className={styles.statLabel}>Streak</div>
             </div>
@@ -181,7 +180,7 @@ export default function DashboardDesktop() {
           <div className={styles.streakCard}>
             <div className={styles.streakTop}>
               <div className={styles.streakLabel}>🔥 Daily Streak</div>
-              {/* ✅ Streak dari UserContext */}
+              {/* ✅ Streak dari localStorage */}
               <div className={styles.streakNum}>{streakDays}</div>
               <div className={styles.streakSub}>Hari berturut-turut belajar</div>
               <div className={styles.streakDots}>
