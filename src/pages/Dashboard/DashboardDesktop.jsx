@@ -104,7 +104,8 @@ export default function DashboardDesktop() {
   const todayQuote = quotes[new Date().getDay() % quotes.length];
 
   // ✅ FIX: Baca streak dari UserContext dulu, fallback ke localStorage
-  const streakDays = parseInt(user?.streak ?? localStorage.getItem("streak") ?? "0", 10);
+  const streakRaw = user?.streak ?? localStorage.getItem("streak") ?? 0;
+  const streakDays = isNaN(parseInt(streakRaw, 10)) ? 0 : parseInt(streakRaw, 10);
   const weekDays   = ["S","M","T","W","T"];
 
   // ✅ FIX: Badge dinamis berdasarkan data user yang sebenarnya
@@ -248,3 +249,4 @@ export default function DashboardDesktop() {
     </div>
   );
 }
+
