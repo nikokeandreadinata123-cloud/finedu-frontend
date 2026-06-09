@@ -129,6 +129,17 @@
   color: #374151;
   margin-bottom: 5px;
   font-weight: 500;
+  gap: 6px;
+  min-width: 0;
+}
+.pbLabel span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.pbLabel span:last-child {
+  flex-shrink: 0;
 }
 .pbTrack { height: 7px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
 .pbFill {
@@ -250,17 +261,21 @@
 /* ── BADGES ── */
 .badgeSection { margin-top: 24px; }
 .badgeGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 .badgeChip {
-  display: flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 14px; border-radius: 99px;
   background: #fff; border: 1px solid rgba(0,0,0,.06);
   box-shadow: 0 1px 6px rgba(0,0,0,.04);
   font-size: 12px; font-weight: 500; color: #374151;
-  transition: transform .15s; white-space: nowrap;
+  transition: transform .15s;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 0;
+  max-width: 100%;
 }
 .badgeChip:hover { transform: scale(1.04); }
 .badgeChip.earned {
@@ -273,8 +288,10 @@
 /* ══ TABLET 769-1024px ══ */
 @media (max-width: 1024px) and (min-width: 769px) {
   .main { padding: 24px 20px 40px; }
+  .gridTwo { grid-template-columns: 1fr; gap: 14px; }
   .moduleGrid { grid-template-columns: 1fr 1fr; }
-  .badgeGrid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .badgeGrid { gap: 8px; }
+  .badgeChip { font-size: 11px; padding: 7px 12px; }
 }
 
 /* ══ MOBILE ≤768px ══ */
@@ -366,13 +383,15 @@
   .modulePbRow { font-size: 9px; margin-bottom: 3px; }
   .modulePbTrack { height: 4px; }
 
-  /* Badges — grid kecil */
+  /* Badges — flex wrap kecil */
   .badgeSection { margin-top: 14px; }
-  .badgeGrid {
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 6px;
+  .badgeGrid { gap: 6px; }
+  .badgeChip {
+    padding: 5px 10px;
+    font-size: 10px;
+    gap: 4px;
+    border-radius: 8px;
   }
-  .badgeChip { padding: 6px 8px; font-size: 10px; gap: 4px; border-radius: 8px; white-space: nowrap; }
   .badgeEmoji { font-size: 12px; }
 }
 
