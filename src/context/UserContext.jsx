@@ -16,13 +16,14 @@ function safeParse(key) {
 export function UserProvider({ children }) {
   const [user, setUser] = useState(() => {
     const stored = safeParse("user");
-    return stored || { id: null, name: '', email: '', phone: '' };
+    return stored || { id: null, name: '', email: '', phone: '', streak: 0, last_login_date: null };
   });
 
   // ✅ login() HANYA update React state, tidak touch localStorage
   // localStorage sudah dihandle oleh Login.jsx dan Register.jsx
   const login = (email, name = '', userData = {}) => {
     const newUser = {
+      ...userData,                            // ✅ spread semua field (termasuk streak, last_login_date, dll)
       id:    userData.id    || null,
       name:  name || email.split('@')[0],
       email: email,
@@ -32,12 +33,12 @@ export function UserProvider({ children }) {
   };
 
   const register = (name, email, phone) => {
-    const newUser = { id: null, name, email, phone };
+    const newUser = { id: null, name, email, phone, streak: 1, last_login_date: null };
     setUser(newUser);
   };
 
   const logout = () => {
-    setUser({ id: null, name: '', email: '', phone: '' });
+    setUser({ id: null, name: '', email: '', phone: '', streak: 0, last_login_date: null });
     localStorage.clear();
   };
 
@@ -60,4 +61,3 @@ export function UserProvider({ children }) {
 export function useUser() {
   return useContext(UserContext);
 }
-
