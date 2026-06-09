@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../../context/UserContext";
 import { API_BASE_URL } from "../../api";
 import styles from "./Register.module.css";
 
@@ -34,7 +33,6 @@ function getPasswordStrength(password) {
 
 export default function Register() {
   const navigate = useNavigate();
-  const { login } = useUser();
 
   const [fullName,        setFullName]        = useState('');
   const [email,           setEmail]           = useState('');
@@ -76,22 +74,12 @@ export default function Register() {
       });
       const data = await res.json();
 
-      if (data.status === "success" && data.user && data.user.id) {
-        // ✅ Bersihkan data user lama
+      if (data.status === "success") {
+        // ✅ Bersihkan semua data user lama
         localStorage.clear();
 
-        // ✅ Simpan token & user baru langsung (auto-login)
-        localStorage.setItem("token",   data.token);
-        localStorage.setItem("user",    JSON.stringify(data.user));
-        localStorage.setItem("user_id", data.user.id);
-        localStorage.setItem("streak",  data.streak ?? 1);
-
-        // ✅ Set context user
-        login(data.user.email, data.user.name, data.user);
-
-        setSuccess("Akun berhasil dibuat! Mengalihkan ke dashboard...");
-        // ✅ Langsung ke dashboard, tidak perlu login lagi
-        setTimeout(() => navigate('/dashboard'), 1000);
+        setSuccess("Akun berhasil dibuat! Silakan login.");
+        setTimeout(() => navigate('/login'), 1500);
       } else {
         setError(data.message || "Registrasi gagal.");
       }
