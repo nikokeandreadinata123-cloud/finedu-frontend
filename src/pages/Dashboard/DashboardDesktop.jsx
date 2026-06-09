@@ -120,16 +120,18 @@ export default function DashboardDesktop() {
   const progresses    = MODULES.map(m => getProgress(m));
   const totalProgress = progresses.reduce((a, b) => a + b, 0) / MODULES.length;
   const todayQuote    = quotes[new Date().getDay() % quotes.length];
-  const streakDays    = parseInt(localStorage.getItem("streak") || "0", 10);
+  const streakRaw  = user?.streak ?? localStorage.getItem("streak") ?? 0;
+  const streakDays = isNaN(parseInt(streakRaw, 10)) ? 0 : parseInt(streakRaw, 10);
   const weekDays      = ["S","M","T","W","T"];
 
   // ✅ Badges dinamis berdasarkan data backend
   const allBadges = [
-    { emoji: "🏅", label: "First Step",    earned: modulSelesai.length >= 1 },
-    { emoji: "🔥", label: "3-Day Streak",  earned: streakDays >= 3 },
-    { emoji: "📚", label: "Modul Selesai", earned: modulSelesai.length >= MODULES.length },
-    { emoji: "🎯", label: "Quiz Master",   earned: false },
-    { emoji: "💎", label: "Top Learner",   earned: false },
+    { emoji: "🏅", label: "First Step",          earned: streakDays >= 1                          },
+    { emoji: "🔥", label: "3-Day Streak",         earned: streakDays >= 3                          },
+    { emoji: "📚", label: "Modul Selesai",        earned: modulSelesai.length >= 1                 },
+    { emoji: "📋", label: "Pembelajar Keuangan",  earned: modulSelesai.length >= 1                 },
+    { emoji: "⚡", label: "Setengah Jalan",       earned: modulSelesai.length >= 2                 },
+    { emoji: "🏆", label: "Master Keuangan",      earned: modulSelesai.length >= MODULES.length    },
   ];
 
   return (
