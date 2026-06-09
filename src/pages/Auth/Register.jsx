@@ -78,6 +78,21 @@ export default function Register() {
         // ✅ Bersihkan semua data user lama
         localStorage.clear();
 
+        // ✅ Simpan token & streak sementara dari response register
+        // (akan di-overwrite saat login, tapi antisipasi kalau auto-login)
+        if (data.token) localStorage.setItem("token", data.token);
+        if (data.streak !== undefined) localStorage.setItem("streak", data.streak);
+        if (data.last_login_date) localStorage.setItem("last_login_date", data.last_login_date);
+        if (data.user) {
+          const userWithStreak = {
+            ...data.user,
+            streak:          data.streak ?? 1,
+            last_login_date: data.last_login_date ?? null,
+          };
+          localStorage.setItem("user",    JSON.stringify(userWithStreak));
+          localStorage.setItem("user_id", data.user.id);
+        }
+
         setSuccess("Akun berhasil dibuat! Silakan login.");
         setTimeout(() => navigate('/login'), 1500);
       } else {
