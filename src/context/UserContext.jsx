@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState } from "react";
 
 const UserContext = createContext(null);
 
-// ✅ Helper: safe JSON parse agar tidak crash jika value "undefined" atau rusak
 function safeParse(key) {
   try {
     const val = localStorage.getItem(key);
@@ -20,6 +19,8 @@ export function UserProvider({ children }) {
     return stored || { id: null, name: '', email: '', phone: '' };
   });
 
+  // ✅ login() HANYA update React state, tidak touch localStorage
+  // localStorage sudah dihandle oleh Login.jsx dan Register.jsx
   const login = (email, name = '', userData = {}) => {
     const newUser = {
       id:    userData.id    || null,
@@ -27,19 +28,12 @@ export function UserProvider({ children }) {
       email: email,
       phone: userData.phone || '',
     };
-
-    // ✅ Overwrite data user saja, jangan clear karena token & streak
-    // sudah disimpan duluan oleh Login.jsx/Register.jsx
-    localStorage.setItem("user",    JSON.stringify(newUser));
-    localStorage.setItem("user_id", String(userData.id ?? ""));
-
     setUser({ ...newUser });
   };
 
   const register = (name, email, phone) => {
     const newUser = { id: null, name, email, phone };
     setUser(newUser);
-    localStorage.setItem("user", JSON.stringify(newUser));
   };
 
   const logout = () => {
