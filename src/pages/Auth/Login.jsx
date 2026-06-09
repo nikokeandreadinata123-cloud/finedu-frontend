@@ -74,22 +74,23 @@ export default function Login() {
         const userId = data.user?.id ?? data.user?.user_id ?? data.id ?? null;
         if (!userId) { setError("User ID tidak ditemukan."); setLoading(false); return; }
 
-        // ✅ FIX: Bersihkan data user lama sebelum simpan data user baru
+        // ✅ Bersihkan data user lama sebelum simpan data user baru
         localStorage.clear();
 
-        localStorage.setItem("token",   data.token);
-        localStorage.setItem("user",    JSON.stringify(data.user));
-        localStorage.setItem("user_id", userId);
+        // ✅ Gabungkan streak ke dalam user object agar context & dashboard bisa baca
+        const userWithStreak = {
+          ...data.user,
+          streak:          data.streak,
+          last_login_date: data.last_login_date,
+        };
 
-        // ✅ Simpan streak dan last_login_date dari response backend
-        if (data.streak !== undefined) {
-          localStorage.setItem("streak", data.streak);
-        }
-        if (data.last_login_date) {
-          localStorage.setItem("last_login_date", data.last_login_date);
-        }
+        localStorage.setItem("token",           data.token);
+        localStorage.setItem("user",            JSON.stringify(userWithStreak));
+        localStorage.setItem("user_id",         userId);
+        localStorage.setItem("streak",          data.streak);
+        localStorage.setItem("last_login_date", data.last_login_date);
 
-        login(data.user.email, data.user.name, data.user);
+        login(data.user.email, data.user.name, userWithStreak); // ✅ streak ikut ke context
         navigate('/dashboard');
       } else { setError(data.message || "Login gagal."); }
     } catch { setError("Gagal terhubung ke server."); }
@@ -241,4 +242,3 @@ export default function Login() {
       </div>
     </div>
   );
-}
