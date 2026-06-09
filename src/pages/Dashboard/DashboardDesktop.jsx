@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import { useUser } from "../../context/UserContext";
+import { getApiUrl } from "../../api";
 import styles from "./Dashboard.module.css";
 
 const DonutChart = ({ percent }) => {
@@ -17,7 +18,6 @@ const DonutChart = ({ percent }) => {
     };
     requestAnimationFrame(animate);
   }, [percent]);
-
   const r = 36, circ = 2 * Math.PI * r, filled = (anim / 100) * circ;
   return (
     <svg width="90" height="90" viewBox="0 0 90 90" style={{ flexShrink: 0 }}>
@@ -26,7 +26,7 @@ const DonutChart = ({ percent }) => {
         strokeDasharray={`${filled} ${circ}`} transform="rotate(-90 45 45)" strokeLinecap="round" />
       <defs>
         <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor="#34D399" />
+          <stop offset="0%" stopColor="#34D399" />
           <stop offset="100%" stopColor="#06b6d4" />
         </linearGradient>
       </defs>
@@ -56,22 +56,6 @@ const ProgressBar = ({ percent, color }) => {
   );
 };
 
-// ✅ FIX: Pakai user_id sebagai prefix key agar progress tidak tercampur antar user
-function getModuleProgress(userId, modulId, totalSlides) {
-  try {
-    // Coba baca dengan prefix user_id dulu
-    const keyWithUser = `user_${userId}_modul_${modulId}`;
-    const keyLegacy   = `modul_${modulId}`;
-    const raw = localStorage.getItem(keyWithUser) || localStorage.getItem(keyLegacy);
-    if (!raw) return 0;
-    const data = JSON.parse(raw);
-    if (!data || !data.completed) return 0;
-    return Math.round((data.completed.length / totalSlides) * 100);
-  } catch {
-    return 0;
-  }
-}
-
 const quotes = [
   "Investasi terbaik adalah investasi pada dirimu sendiri. 🚀",
   "Mulai dari Rp1.000 pun, yang penting mulai! 💪",
@@ -80,42 +64,73 @@ const quotes = [
   "Uangmu, hidupmu, pilihanmu. 💡",
 ];
 
-const allBadges = [
-  { emoji: "🏅", label: "First Step",    earned: true  },
-  { emoji: "🔥", label: "3-Day Streak",  earned: true  },
-  { emoji: "📚", label: "Modul Selesai", earned: false },
-  { emoji: "🎯", label: "Quiz Master",   earned: false },
-  { emoji: "💎", label: "Top Learner",   earned: false },
+const MODULES = [
+  { id: 1, title: "Manajemen Utang",    desc: "Pelajari cara mengelola dan mengurangi utang secara efektif",     emoji: "📋", iconBg: "#FFF7ED", totalSlides: 3 },
+  { id: 2, title: "Dasar Investasi",    desc: "Pahami konsep dasar investasi untuk masa depan yang lebih baik", emoji: "🎯", iconBg: "#EFF6FF", totalSlides: 3 },
+  { id: 3, title: "Dasar Penganggaran", desc: "Buat dan kelola anggaran bulanan dengan mudah",                   emoji: "📒", iconBg: "#FFF7ED", totalSlides: 3 },
 ];
 
 export default function DashboardDesktop() {
-  const { user } = useUser();
-  const navigate  = useNavigate();
+  const { user }    = useUser();
+  const navigate    = useNavigate();
   const displayName = user?.name || "Pengguna";
   const userId      = user?.id || localStorage.getItem("user_id");
 
-  const [refresh, setRefresh] = useState(0);
+  const [modulSelesai, setModulSelesai] = useState([]);
+  const [slideMap,     setSlideMap]     = useState({});
 
   useEffect(() => {
-    const interval = setInterval(() => setRefresh(p => p + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!userId) return;
 
-  const modules = [
-    { id: 1, title: "Manajemen Utang",    desc: "Pelajari cara mengelola dan mengurangi utang secara efektif",        emoji: "📋", iconBg: "#FFF7ED", iconColor: "#F59E0B", totalSlides: 3 },
-    { id: 2, title: "Dasar Investasi",    desc: "Pahami konsep dasar investasi untuk masa depan yang lebih baik",    emoji: "🎯", iconBg: "#EFF6FF", iconColor: "#3B82F6", totalSlides: 3 },
-    { id: 3, title: "Dasar Penganggaran", desc: "Buat dan kelola anggaran bulanan dengan mudah",                      emoji: "📒", iconBg: "#FFF7ED", iconColor: "#F97316", totalSlides: 3 },
+    // ✅ Fetch modul selesai dari backend
+    fetch(getApiUrl(`/get_modul.php?user_id=${userId}`))
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === "success") setModulSelesai(data.modul_selesai || []);
+      })
+      .catch(() => {});
+
+    // ✅ Fetch slide selesai dari backend
+    fetch(getApiUrl(`/get_progress.php?user_id=${userId}`))
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === "success") {
+          // Kelompokkan slide_id per modul_id
+          const map = {};
+          (data.data || []).forEach(row => {
+            if (!map[row.modul_id]) map[row.modul_id] = new Set();
+            map[row.modul_id].add(row.slide_id);
+          });
+          setSlideMap(map);
+        }
+      })
+      .catch(() => {});
+  }, [userId]);
+
+  // ✅ Hitung progress dari backend data
+  const getProgress = (mod) => {
+    if (modulSelesai.includes(mod.id)) return 100;
+    const slides = slideMap[mod.id];
+    if (slides && slides.size > 0) {
+      return Math.min(100, Math.round((slides.size / mod.totalSlides) * 100));
+    }
+    return 0;
+  };
+
+  const progresses    = MODULES.map(m => getProgress(m));
+  const totalProgress = progresses.reduce((a, b) => a + b, 0) / MODULES.length;
+  const todayQuote    = quotes[new Date().getDay() % quotes.length];
+  const streakDays    = parseInt(localStorage.getItem("streak") || "0", 10);
+  const weekDays      = ["S","M","T","W","T"];
+
+  // ✅ Badges dinamis berdasarkan data backend
+  const allBadges = [
+    { emoji: "🏅", label: "First Step",    earned: modulSelesai.length >= 1 },
+    { emoji: "🔥", label: "3-Day Streak",  earned: streakDays >= 3 },
+    { emoji: "📚", label: "Modul Selesai", earned: modulSelesai.length >= MODULES.length },
+    { emoji: "🎯", label: "Quiz Master",   earned: false },
+    { emoji: "💎", label: "Top Learner",   earned: false },
   ];
-
-  // ✅ FIX: Kirim userId ke getModuleProgress agar tiap user punya progress sendiri
-  const progresses    = modules.map(m => getModuleProgress(userId, m.id, m.totalSlides));
-  const totalProgress = progresses.reduce((a, b) => a + b, 0) / modules.length;
-
-  const todayQuote = quotes[new Date().getDay() % quotes.length];
-
-  // ✅ FIX: Ambil streak dari localStorage yang sudah disimpan saat login/register
-  const streakDays = parseInt(localStorage.getItem("streak") || "0", 10);
-  const weekDays   = ["S","M","T","W","T"];
 
   return (
     <div className={styles.root}>
@@ -123,12 +138,8 @@ export default function DashboardDesktop() {
       <main className={styles.main}>
 
         <div className={styles.header}>
-          <h1 className={styles.greeting}>
-            Halo, <span>{displayName}</span>! 👋
-          </h1>
-          <p className={styles.subGreeting}>
-            Lanjutkan perjalanan literasi keuangan kamu hari ini
-          </p>
+          <h1 className={styles.greeting}>Halo, <span>{displayName}</span>! 👋</h1>
+          <p className={styles.subGreeting}>Lanjutkan perjalanan literasi keuangan kamu hari ini</p>
         </div>
 
         <div className={styles.statsRow}>
@@ -142,16 +153,13 @@ export default function DashboardDesktop() {
           <div className={styles.statCard}>
             <div className={`${styles.statIconBox} ${styles.green}`}>✅</div>
             <div>
-              <div className={styles.statNum}>
-                {progresses.filter(p => p === 100).length}/{modules.length}
-              </div>
+              <div className={styles.statNum}>{modulSelesai.length}/{MODULES.length}</div>
               <div className={styles.statLabel}>Selesai</div>
             </div>
           </div>
           <div className={styles.statCard}>
             <div className={`${styles.statIconBox} ${styles.orange}`}>🔥</div>
             <div>
-              {/* ✅ Streak sekarang dari localStorage, bukan hardcode */}
               <div className={styles.statNum}>{streakDays}</div>
               <div className={styles.statLabel}>Streak</div>
             </div>
@@ -164,7 +172,7 @@ export default function DashboardDesktop() {
             <div className={styles.donutWrap}>
               <DonutChart percent={Math.round(totalProgress)} />
               <div className={styles.progressBars}>
-                {modules.map((mod, i) => (
+                {MODULES.map((mod, i) => (
                   <div className={styles.pbRow} key={mod.id}>
                     <div className={styles.pbLabel}>
                       <span>{mod.emoji} {mod.title}</span>
@@ -180,7 +188,6 @@ export default function DashboardDesktop() {
           <div className={styles.streakCard}>
             <div className={styles.streakTop}>
               <div className={styles.streakLabel}>🔥 Daily Streak</div>
-              {/* ✅ Streak dari localStorage */}
               <div className={styles.streakNum}>{streakDays}</div>
               <div className={styles.streakSub}>Hari berturut-turut belajar</div>
               <div className={styles.streakDots}>
@@ -201,7 +208,7 @@ export default function DashboardDesktop() {
             <button className={styles.seeAll} onClick={() => navigate('/learning')}>Lihat Semua →</button>
           </div>
           <div className={styles.moduleGrid}>
-            {modules.map((mod, i) => {
+            {MODULES.map((mod, i) => {
               const progress    = progresses[i];
               const isDone      = progress === 100;
               const isOngoing   = progress > 0 && progress < 100;
@@ -218,9 +225,7 @@ export default function DashboardDesktop() {
                   <div className={styles.moduleCardTitle}>{mod.title}</div>
                   <div className={styles.moduleCardDesc}>{mod.desc}</div>
                   <div className={`${styles.moduleStatus} ${statusClass}`}>{statusText}</div>
-                  <div className={styles.modulePbRow}>
-                    <span>Progress</span><span>{progress}%</span>
-                  </div>
+                  <div className={styles.modulePbRow}><span>Progress</span><span>{progress}%</span></div>
                   <div className={styles.modulePbTrack}>
                     <div className={styles.modulePbFill} style={{ width: `${progress}%`, background: gradients[i] }} />
                   </div>
