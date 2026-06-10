@@ -251,9 +251,11 @@
   gap: 8px;
   border: 1.5px solid var(--calc-border);
   border-radius: var(--radius-sm);
-  padding: 10px 14px;
+  padding: 0 14px;
+  height: 44px;
   background: #fafafa;
   transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
 }
 
 .calc-input-wrap:focus-within {
@@ -262,7 +264,8 @@
   background: #fff;
 }
 
-.calc-input-prefix {
+.calc-input-prefix,
+.calc-input-suffix {
   font-size: 13px;
   color: var(--text-muted);
   font-weight: 500;
@@ -279,6 +282,9 @@
   color: var(--text-primary);
   background: transparent;
   min-width: 0;
+  height: 100%;
+  line-height: 1;
+  padding: 0;
 }
 
 /* ─── Action Buttons ─── */
@@ -525,7 +531,7 @@
   .calc-field label { font-size: 12.5px; }
   .calc-field-hint  { font-size: 11px; }
 
-  .calc-input-wrap { padding: 9px 12px; }
+  .calc-input-wrap { padding: 0 12px; height: 42px; }
   .calc-input-wrap input { font-size: 13px; }
 
   .calc-actions {
