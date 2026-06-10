@@ -5,18 +5,8 @@ import DebtPayoffCalc from "./DebtPayoffCalc";
 import "./Calculator.css";
 
 const TABS = [
-  {
-    id: "loan",
-    label: "Loan Simulator",
-    icon: "🏦",
-    desc: "Simulasi Pinjaman",
-  },
-  {
-    id: "debt",
-    label: "Debt Payoff",
-    icon: "💳",
-    desc: "Pelunasan Hutang",
-  },
+  { id: "loan", label: "Loan Simulator", icon: "🏦" },
+  { id: "debt", label: "Debt Payoff",    icon: "💳" },
 ];
 
 export default function CalculatorDesktop() {
@@ -29,12 +19,12 @@ export default function CalculatorDesktop() {
       <main className="calc-main" style={{ minWidth: 0 }}>
         {/* ── Page Header ── */}
         <div className="calc-page-header">
-          <div className="calc-page-eyebrow">Financial Tools</div>
+          <div className="calc-page-eyebrow">Financial Calculator Tools</div>
           <h1 className="calc-page-title">
-            Financial <span>Calculators</span>
+            Kalkulator <span>Keuangan</span>
           </h1>
           <p className="calc-page-sub">
-            Gunakan kalkulator untuk merencanakan keuangan Anda dengan lebih baik
+            Hitung cicilan pinjaman dan rencanakan pelunasan hutangmu dengan mudah
           </p>
         </div>
 
