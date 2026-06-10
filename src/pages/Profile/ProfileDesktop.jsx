@@ -5,7 +5,7 @@ import { API_BASE_URL } from "../../api";
 import styles from "./Profile.module.css";
 
 const TOTAL_MODUL = 3;
-const TOTAL_BADGE = 3;
+const TOTAL_BADGE = 6;
 
 // Jumlah slide per modul — harus sama dengan konstanta di tiap file modul
 const SLIDES_PER_MODUL = { 1: 3, 2: 3, 3: 2 };
@@ -14,9 +14,9 @@ const SLIDES_PER_MODUL = { 1: 3, 2: 3, 3: 2 };
 const STYLE_ID = "finedu-profile-anim";
 const ANIM_CSS = `
 @keyframes fePop {
-  0%   { opacity:0; transform:scale(0.4) translateY(4px); }
-  60%  { opacity:1; transform:scale(1.18) translateY(-2px); }
-  80%  { transform:scale(0.96); }
+  0%   { opacity:0; transform:scale(0.5) translateY(6px); }
+  50%  { opacity:1; transform:scale(1.12) translateY(-3px); }
+  75%  { transform:scale(0.97); }
   100% { opacity:1; transform:scale(1) translateY(0); }
 }
 @keyframes feShimmer {
@@ -48,8 +48,13 @@ const ANIM_CSS = `
   50%      { border-color:#1EC99B; box-shadow:0 0 12px rgba(30,201,155,0.3); }
 }
 @keyframes feFadeUp {
-  from { opacity:0; transform:translateY(10px); }
+  from { opacity:0; transform:translateY(14px); }
   to   { opacity:1; transform:translateY(0); }
+}
+@keyframes feLockedIn {
+  0%   { opacity:0; transform:scale(0.7) translateY(6px); }
+  60%  { opacity:0.7; transform:scale(1.05) translateY(-1px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
 }
 @keyframes feCfDrop {
   0%   { transform:translateY(0) rotate(0deg); opacity:1; }
@@ -61,12 +66,13 @@ const ANIM_CSS = `
   background-size: 200% auto !important;
   animation: feShimmer 1.8s linear infinite, feGlow 2s ease-in-out infinite;
 }
-.fe-ring     { animation: feRing 0.85s ease-out; }
-.fe-badge    { animation: fePop 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
-.fe-check    { display:inline-block; animation: feCheck 0.48s cubic-bezier(0.34,1.56,0.64,1) both; }
-.fe-label    { display:inline-block; animation: feLabel 0.42s cubic-bezier(0.34,1.56,0.64,1) both; }
+.fe-ring     { animation: feRing 1.1s ease-out; }
+.fe-badge    { animation: fePop   0.75s cubic-bezier(0.22,1,0.36,1) both; }
+.fe-check    { display:inline-block; animation: feCheck 0.6s cubic-bezier(0.22,1,0.36,1) both; }
+.fe-label    { display:inline-block; animation: feLabel 0.55s cubic-bezier(0.22,1,0.36,1) both; }
 .fe-row-done { animation: feBorder 2.6s ease-in-out 0.5s 2; }
-.fe-fadein   { animation: feFadeUp 0.4s ease both; }
+.fe-fadein   { animation: feFadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both; }
+.fe-locked   { animation: feLockedIn 0.65s cubic-bezier(0.22,1,0.36,1) both; }
 `;
 
 function injectStyles() {
@@ -76,6 +82,9 @@ function injectStyles() {
   el.textContent = ANIM_CSS;
   document.head.appendChild(el);
 }
+
+// Inject langsung saat module load agar CSS siap sebelum render pertama
+injectStyles();
 
 // ─── Baca status modul dari localStorage ────────────────────────────────────
 function getModulSelesaiFromLocal() {
@@ -230,6 +239,98 @@ function AnimatedCounter({ target }) {
   return <span>{count}</span>;
 }
 
+// ─── BadgeItem: animasi sama seperti modul (state-driven) ────────────────────
+function BadgeItem({ badge, index, earnedKey }) {
+  const [animState, setAnimState] = useState("idle");
+  const prevEarned = useRef(badge.diperoleh);
+  const isMounted  = useRef(false);
+
+  // Mount pertama → semua badge animasi masuk (earned: pop, locked: fadein)
+  // Delay bertahap per index supaya muncul satu per satu
+  useEffect(() => {
+    const DELAY = index * 130; // 130ms per badge → smooth waterfall
+    const POP_DURATION = 900;  // durasi pop + ring
+
+    if (badge.diperoleh) {
+      const t1 = setTimeout(() => setAnimState("popping"), DELAY);
+      const t2 = setTimeout(() => setAnimState("done"),    DELAY + POP_DURATION);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    } else {
+      // locked juga animasi masuk (fe-locked via className di icon)
+      setAnimState("locked");
+    }
+
+    // Set mounted SETELAH effect pertama selesai setup
+    const tm = setTimeout(() => { isMounted.current = true; }, DELAY + POP_DURATION + 100);
+    return () => clearTimeout(tm);
+  }, []); // eslint-disable-line
+
+  // Badge baru terbuka saat runtime (false → true)
+  useEffect(() => {
+    if (!isMounted.current) return;
+    if (badge.diperoleh && !prevEarned.current) {
+      setAnimState("idle");
+      const t1 = setTimeout(() => setAnimState("popping"), 60);
+      const t2 = setTimeout(() => setAnimState("done"),    960);
+      prevEarned.current = true;
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+    if (!badge.diperoleh) prevEarned.current = false;
+  }, [badge.diperoleh, earnedKey]);
+
+  const isPopping = animState === "popping";
+  const isDone    = animState === "done";
+  const isLocked  = animState === "locked";
+
+  return (
+    <div
+      className="fe-fadein"
+      style={{
+        animationDelay: `${index * 0.13}s`,
+        display:"flex", flexDirection:"column", alignItems:"center",
+        textAlign:"center", gap:"6px",
+        background: badge.diperoleh ? "#F0FDF4" : "#F8F9FA",
+        borderRadius:"12px", padding:"16px 12px",
+        border: badge.diperoleh ? "1px solid #BBF7D0" : "1px solid transparent",
+        boxShadow: badge.diperoleh ? "0 2px 8px rgba(30,201,155,0.12)" : "none",
+        opacity: badge.diperoleh ? 1 : 0.55,
+        transition:"background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease, opacity 0.5s ease",
+        minWidth:0, overflow:"hidden", boxSizing:"border-box",
+      }}
+    >
+      <div
+        key={`icon-${index}-${earnedKey}-${animState}`}
+        className={[
+          isPopping              ? "fe-badge" : "",
+          (isPopping || isDone) && badge.diperoleh ? "fe-ring" : "",
+          isLocked               ? "fe-locked" : "",
+        ].filter(Boolean).join(" ")}
+        style={{
+          width:"44px", height:"44px", borderRadius:"12px",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:"22px", flexShrink:0,
+          backgroundColor: badge.diperoleh ? badge.color : "#D1D5DB",
+          filter: badge.diperoleh ? "none" : "grayscale(1)",
+          animationDelay: `${index * 0.13 + 0.06}s`,
+          transition:"background-color 0.5s ease, filter 0.5s ease",
+        }}
+      >
+        {badge.icon}
+      </div>
+      <p style={{ fontSize:"12px", fontWeight:700, color:"#111827", margin:0, lineHeight:1.3, wordBreak:"break-word", width:"100%" }}>
+        {badge.label}
+      </p>
+      <p style={{ fontSize:"11px", color:"#6B7280", margin:0, lineHeight:1.3, wordBreak:"break-word", width:"100%" }}>
+        {badge.desc}
+      </p>
+      <p style={{ fontSize:"11px", fontWeight:700, margin:0, color: badge.diperoleh ? "#059669" : "#9CA3AF",
+                  transition:"color 0.5s ease" }}>
+        {badge.diperoleh ? "🏆 Diperoleh!" : "🔒 Belum"}
+      </p>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 const ProfileDesktop = () => {
   const { user, login } = useUser();
@@ -240,8 +341,40 @@ const ProfileDesktop = () => {
   const [successMsg,   setSuccessMsg]   = useState("");
   const [errorMsg,     setErrorMsg]     = useState("");
   const [modulSelesai, setModulSelesai] = useState([]);
+  // Track streak sebagai state agar animasi badge bisa dipicu saat berubah
+  const [streakDays,   setStreakDays]   = useState(() =>
+    parseInt(user?.streak ?? localStorage.getItem("streak") ?? "0", 10)
+  );
+  // earnedKeys: init dengan key=1 untuk badge yang SUDAH earned saat mount → animasi fePop langsung
+  const [earnedKeys, setEarnedKeys] = useState(() => {
+    const streak = parseInt(user?.streak ?? localStorage.getItem("streak") ?? "0", 10);
+    const moduls = (() => { try { return JSON.parse(localStorage.getItem("modul_selesai") || "[]"); } catch { return []; } })();
+    const total  = moduls.length;
+    return {
+      0: streak >= 1 ? 1 : 0,   // First Step
+      1: streak >= 3 ? 1 : 0,   // 3-Day Streak
+      2: total  >= 1 ? 1 : 0,   // Modul Selesai
+      3: total  >= 1 ? 1 : 0,   // Pembelajar Keuangan
+      4: total  >= 2 ? 1 : 0,   // Setengah Jalan
+      5: total  >= 3 ? 1 : 0,   // Master Keuangan
+    };
+  });
+  // prevEarnedRef: init sesuai kondisi awal — useEffect hanya trigger badge yang BARU terbuka
+  const prevEarnedRef = useRef((() => {
+    const streak = parseInt(user?.streak ?? localStorage.getItem("streak") ?? "0", 10);
+    const moduls = (() => { try { return JSON.parse(localStorage.getItem("modul_selesai") || "[]"); } catch { return []; } })();
+    const total  = moduls.length;
+    return {
+      0: streak >= 1,   // First Step
+      1: streak >= 3,   // 3-Day Streak
+      2: total  >= 1,   // Modul Selesai
+      3: total  >= 1,   // Pembelajar Keuangan
+      4: total  >= 2,   // Setengah Jalan
+      5: total  >= 3,   // Master Keuangan
+    };
+  })());
 
-  useEffect(() => { injectStyles(); }, []);
+  // injectStyles sudah dipanggil di module level — tidak perlu useEffect lagi
 
   // ── Fetch progress: coba API dulu, fallback ke localStorage ─────────────
   const fetchProgress = () => {
@@ -275,11 +408,37 @@ const ProfileDesktop = () => {
   const totalSelesai   = modulSelesai.length;
   const progressPersen = Math.round((totalSelesai / TOTAL_MODUL) * 100);
 
+  // Sync streakDays dari user context setiap kali user berubah
+  useEffect(() => {
+    const val = parseInt(user?.streak ?? localStorage.getItem("streak") ?? "0", 10);
+    if (!isNaN(val)) setStreakDays(val);
+  }, [user]);
+
   const badges = [
-    { icon:"📋", color:"#4A90D9", label:"Pembelajar Keuangan", desc:"Selesaikan 1 modul pembelajaran", diperoleh: totalSelesai >= 1 },
-    { icon:"⚡", color:"#E91E63", label:"Setengah Jalan",      desc:"Selesaikan 2 modul pembelajaran", diperoleh: totalSelesai >= 2 },
-    { icon:"🏆", color:"#4DC57F", label:"Master Keuangan",     desc:"Selesaikan semua modul (3/3)",    diperoleh: totalSelesai >= TOTAL_MODUL },
+    { icon:"🏅", color:"#F59E0B", label:"First Step",           desc:"Login pertama kali",                 diperoleh: streakDays >= 1              },
+    { icon:"🔥", color:"#EF4444", label:"3-Day Streak",          desc:"Login 3 hari berturut-turut",         diperoleh: streakDays >= 3              },
+    { icon:"📚", color:"#8B5CF6", label:"Modul Selesai",         desc:"Selesaikan minimal 1 modul",          diperoleh: totalSelesai >= 1            },
+    { icon:"📋", color:"#4A90D9", label:"Pembelajar Keuangan",   desc:"Selesaikan 1 modul pembelajaran",     diperoleh: totalSelesai >= 1            },
+    { icon:"⚡", color:"#E91E63", label:"Setengah Jalan",        desc:"Selesaikan 2 modul pembelajaran",     diperoleh: totalSelesai >= 2            },
+    { icon:"🏆", color:"#4DC57F", label:"Master Keuangan",       desc:"Selesaikan semua modul (3/3)",        diperoleh: totalSelesai >= TOTAL_MODUL  },
   ];
+
+  // Deteksi badge yang baru terbuka → naikkan earnedKey → re-mount → animasi fePop
+  useEffect(() => {
+    const newlyEarned = [];
+    badges.forEach((badge, i) => {
+      if (badge.diperoleh && !(prevEarnedRef.current?.[i] ?? false)) newlyEarned.push(i);
+    });
+    prevEarnedRef.current = Object.fromEntries(badges.map((b, i) => [i, b.diperoleh]));
+    if (newlyEarned.length > 0) {
+      setEarnedKeys(prev => {
+        const next = { ...prev };
+        newlyEarned.forEach(i => { next[i] = (prev[i] ?? 0) + 1; });
+        return next;
+      });
+    }
+  }, [streakDays, totalSelesai]);
+
   const badgeDiperoleh = badges.filter(b => b.diperoleh).length;
 
   const getInitials = (name) => {
@@ -416,22 +575,12 @@ const ProfileDesktop = () => {
 
           <div className={styles.badgeGrid}>
             {badges.map((badge, i) => (
-              <div
-                key={i}
-                className={[styles.badgeItem, badge.diperoleh ? styles.badgeEarned : ""].join(" ")}
-              >
-                <div
-                  className={[styles.badgeIcon, badge.diperoleh ? "" : styles.locked].join(" ")}
-                  style={{ backgroundColor: badge.diperoleh ? badge.color : undefined }}
-                >
-                  {badge.icon}
-                </div>
-                <p className={styles.badgeLabel}>{badge.label}</p>
-                <p className={styles.badgeDesc}>{badge.desc}</p>
-                <p className={[styles.badgeStatus, badge.diperoleh ? styles.earned : styles.locked].join(" ")}>
-                  {badge.diperoleh ? "🏆 Diperoleh!" : "🔒 Belum"}
-                </p>
-              </div>
+              <BadgeItem
+                key={`badgeitem-${i}-${earnedKeys[i]??0}`}
+                badge={badge}
+                index={i}
+                earnedKey={earnedKeys[i] ?? 0}
+              />
             ))}
           </div>
         </div>
