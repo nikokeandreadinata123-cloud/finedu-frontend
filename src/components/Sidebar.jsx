@@ -55,7 +55,7 @@ const menuItems = [
   { label: "Dashboard",        path: "/dashboard",  Icon: IconDashboard  },
   { label: "Learning Modules", path: "/learning",   Icon: IconLearning   },
   { label: "Calculators",      path: "/calculator", Icon: IconCalculator },
-  { label: "Simulasi",         path: "/simulasi",   Icon: IconSimulasi   },
+  { label: "Simulation",       path: "/simulasi",   Icon: IconSimulasi   },
   { label: "Profile",          path: "/profile",    Icon: IconProfile    },
 ];
 
@@ -335,11 +335,6 @@ const css = `
     .sb-bottom-nav { display: none !important; }
   }
 
-  /* Spacer — tidak digunakan sebagai flex child, padding di .main sudah cukup */
-  .sb-bottom-spacer {
-    display: none !important;
-  }
-
   /* animate item masuk */
   @keyframes sbItemIn {
     from { opacity: 0; transform: translateX(-10px); }
@@ -361,6 +356,11 @@ export default function Sidebar() {
   const location  = useLocation();
 
   const go = (path) => navigate(path);
+
+  const handleSignOut = () => {
+    localStorage.clear();
+    navigate('/login');
+  };
 
   return (
     <>
@@ -403,7 +403,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Sign Out */}
-        <button className="sb-signout" onClick={() => go('/login')}>
+        <button className="sb-signout" onClick={handleSignOut}>
           <IconSignOut />
           Sign Out
         </button>
@@ -429,7 +429,7 @@ export default function Sidebar() {
               <span className="sb-bn-label">
                 {label === 'Learning Modules' ? 'Learning' :
                  label === 'Calculators'      ? 'Calc'     :
-                 label === 'Simulasi'         ? 'Simulasi' : label}
+                 label === 'Simulation'       ? 'Simulation' : label}
               </span>
             </button>
           );
@@ -437,7 +437,7 @@ export default function Sidebar() {
         {/* Sign Out sebagai item ke-5 di mobile */}
         <button
           className="sb-bn-item"
-          onClick={() => go('/login')}
+          onClick={handleSignOut}
           style={{ color: '#F44336' }}
         >
           <span className="sb-bn-icon">
@@ -452,8 +452,6 @@ export default function Sidebar() {
         </button>
       </nav>
 
-      {/* Spacer agar konten tidak tertutup bottom nav */}
-      <div className="sb-bottom-spacer" />
     </>
   );
 }
