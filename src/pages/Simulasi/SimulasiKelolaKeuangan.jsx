@@ -26,7 +26,8 @@ export default function SimulasiKelolaKeuangan() {
         <div className="skk-header">
           <div className="skk-badge">
             <span className="skk-badge-dot" />
-            Financial Tools
+            Financial Management Simulation Tool
+
           </div>
           <h1 className="skk-title">
             Simulasi <span>Kelola Keuangan</span>
